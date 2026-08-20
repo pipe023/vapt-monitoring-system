@@ -28,7 +28,13 @@ class AuthenticatedSessionController extends Controller
 
         $request->session()->regenerate();
 
-        return redirect()->intended(route('dashboard', absolute: false));
+        // Redirect Viewer role directly to Viewer Portal
+        if ($request->user()->isViewer()) {
+            return redirect()->intended(route('viewer.dashboard'));
+        }
+
+        // Redirect Admin / Superadmin to Main Dashboard
+        return redirect()->intended(route('dashboard'));
     }
 
     /**
