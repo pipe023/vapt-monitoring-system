@@ -72,7 +72,9 @@
                                             {{ $system->status }}
                                         </span>
                                     </td>
-                                    <td class="px-6 py-4 text-gray-500 max-w-xs truncate">{{ $system->remarks ?? 'N/A' }}</td>
+                                    <td class="px-6 py-4 text-sm text-gray-500 max-w-[250px] whitespace-normal break-words">
+                                            {{ $system->remarks }}
+</td>
 
                                     @if(auth()->user()->isAdmin())
                                         <td class="px-6 py-4 text-right space-x-2">

@@ -80,8 +80,8 @@
                                 </div>
                             </div>
 
-                            <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
-                                <table class="w-full text-left border-collapse min-w-max">
+                            <div class="overflow-x-auto w-full">
+                                <table class="min-w-full divide-y divide-gray-200">
                                     <thead class="bg-gray-50">
                                         <tr>
                                             <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">System Name</th>
@@ -122,8 +122,8 @@
                                                         {{ $system->status }}
                                                     </span>
                                                 </td>
-                                                <td class="px-6 py-4 text-gray-500 max-w-xs truncate">
-                                                    {{ $system->remarks ?? 'N/A' }}
+                                                <td class="px-6 py-4 text-sm text-gray-500 max-w-[250px] whitespace-normal break-words">
+                                                    {{ $system->remarks }}
                                                 </td>
                                                 <td class="px-6 py-4 whitespace-nowrap text-gray-500 text-xs">
                                                     {{ $system->updated_at->format('M d, Y h:i A') }}
