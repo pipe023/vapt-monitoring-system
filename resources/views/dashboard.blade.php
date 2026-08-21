@@ -1,14 +1,17 @@
 <x-app-layout>
     <x-slot name="header">
-        <div class="flex justify-between items-center">
-            <h2 class="font-semibold text-xl text-gray-800 leading-tight">
-                {{ __('VAPT Status Dashboard') }}
-            </h2>
+        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+            <div>
+                <h2 class="font-semibold text-xl text-gray-800 leading-tight">
+                    {{ __('VAPT Status Dashboard') }}
+                </h2>
+                <p class="text-xs text-gray-400 mt-0.5">Live overview of monitored system security assessment status.</p>
+            </div>
         </div>
     </x-slot>
 
-    <div class="py-10">
-        <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
+    <div class="py-8">
+        <div class="w-full max-w-[98%] mx-auto sm:px-6 lg:px-8">
             
             <!-- TOP BAR: Live Clock -->
             <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-4 mb-6 flex justify-between items-center border-l-4 border-indigo-500">

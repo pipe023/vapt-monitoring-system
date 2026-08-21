@@ -17,6 +17,7 @@ return new class extends Migration
             $table->string('url')->nullable();
             // Updated statuses here:
             $table->enum('status', ['FOR PATCHING', 'COMPLETED', 'ONGOING PATCHING', 'ONGOING VAPT'])->default('ONGOING VAPT');
+            $table->date('date_of_last_va')->nullable();
             $table->text('remarks')->nullable();
             $table->timestamps(); // This automatically handles the Add/Edit timestamps
             $table->softDeletes();

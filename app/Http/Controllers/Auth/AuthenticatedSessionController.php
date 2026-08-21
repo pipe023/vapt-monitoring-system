@@ -16,7 +16,7 @@ class AuthenticatedSessionController extends Controller
      */
     public function create(): View
     {
-        return view('auth.login');
+        return view('welcome');
     }
 
     /**
@@ -28,13 +28,7 @@ class AuthenticatedSessionController extends Controller
 
         $request->session()->regenerate();
 
-        // Redirect Viewer role directly to Viewer Portal
-        if ($request->user()->isViewer()) {
-            return redirect()->intended(route('viewer.dashboard'));
-        }
-
-        // Redirect Admin / Superadmin to Main Dashboard
-        return redirect()->intended(route('dashboard'));
+        return redirect()->route('portal');
     }
 
     /**

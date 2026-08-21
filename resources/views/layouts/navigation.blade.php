@@ -1,143 +1,48 @@
-<nav x-data="{ open: false }" class="bg-white border-b border-gray-100">
-    <!-- Primary Navigation Menu -->
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div class="flex justify-between h-16">
-            
-            <!-- LEFT SIDE: Logo and Links -->
-            <div class="flex">
-                <!-- Logo -->
-                <div class="shrink-0 flex items-center">
-                    <a href="{{ route('dashboard') }}" class="flex items-center space-x-3">
-                        <!-- Your Custom Image Logo -->
-                        <img src="{{ asset('images/isg_logo.png') }}" alt="VAPT Logo" class="block h-9 w-auto">
-                        
-                        <!-- Optional App Title Next to Logo -->
-                        <span class="font-bold text-gray-800 text-lg hidden md:block">ISG Monitoring System</span>
-                    </a>
-                </div>
+<nav x-data="{ open: false }" class="relative z-40">
+    <div x-show="open" x-transition.opacity class="fixed inset-0 bg-slate-950/50 lg:hidden" @click="open = false"></div>
 
-                <!-- Navigation Links (Example) -->
-                <div class="hidden space-x-8 sm:-my-px sm:ms-10 sm:flex">
-                   <!-- VISIBLE ONLY TO ADMIN / SUPERADMIN -->
-                    @if(!auth()->user()->isViewer())
-                        <x-nav-link :href="route('dashboard')" :active="request()->routeIs('dashboard')">
-                            {{ __('VAPT Dashboard') }}
-                        </x-nav-link>
-
-                        <x-nav-link :href="route('vapt.index')" :active="request()->routeIs('vapt.*')">
-                            {{ __('Monitored Systems') }}
-                        </x-nav-link>
-                    @endif
-
-                    <!-- VISIBLE TO VIEWERS -->
-                    @if(auth()->user()->isViewer())
-                        <x-nav-link :href="route('viewer.dashboard')" :active="request()->routeIs('viewer.*')">
-                            {{ __('Viewer Portal') }}
-                        </x-nav-link>
-                    @endif
-
-                    <!-- NEW DEDICATED CALENDAR TAB -->
-                    <x-nav-link :href="route('calendar')" :active="request()->routeIs('calendar')">
-                        {{ __('Calendar') }}
-                    </x-nav-link>
-
-                    @if(auth()->user()->isSuperAdmin())
-                        <x-nav-link :href="route('register')" :active="request()->routeIs('register')">
-                            {{ __('User Management') }}
-                        </x-nav-link>
-                    @endif
-                </div>
-            </div>
-
-            <!-- Settings Dropdown & User Profile Info -->
-            <div class="hidden sm:flex sm:items-center sm:ms-6">
-                
-                <!-- User Badge with Role -->
-                <div class="flex items-center space-x-2 border-r border-gray-200 pr-4 text-xs">
-                    <div class="w-8 h-8 rounded-full bg-indigo-100 text-indigo-700 font-bold flex items-center justify-center">
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
-                        </svg>
-                    </div>
-                    <div class="flex flex-col">
-                        <span class="font-semibold text-gray-800">User: {{ Auth::user()->username }}</span>
-                        <span class="text-[10px] font-bold uppercase tracking-wider {{ Auth::user()->isAdmin() ? 'text-indigo-600' : 'text-gray-400' }}">
-                            Role: {{ Auth::user()->role }}
-                        </span>
-                    </div>
-                </div>
-
-                <!-- Dropdown -->
-                <x-dropdown align="right" width="48">
-                    <x-slot name="trigger">
-                        <button class="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-gray-500 bg-white hover:text-gray-700 focus:outline-none transition">
-                            <div>Account</div>
-                            <div class="ms-1">
-                                <svg class="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">
-                                    <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" />
-                                </svg>
-                            </div>
-                        </button>
-                    </x-slot>
-
-                    <x-slot name="content">
-                        <x-dropdown-link :href="route('profile.edit')">
-                            {{ __('Profile') }}
-                        </x-dropdown-link>
-
-                        <form method="POST" action="{{ route('logout') }}">
-                            @csrf
-                            <x-dropdown-link :href="route('logout')" onclick="event.preventDefault(); this.closest('form').submit();">
-                                {{ __('Log Out') }}
-                            </x-dropdown-link>
-                        </form>
-                    </x-slot>
-                </x-dropdown>
-            </div>
-
-            <!-- Hamburger -->
-            <div class="-me-2 flex items-center sm:hidden">
-                <button @click="open = ! open" class="inline-flex items-center justify-center p-2 rounded-md text-gray-400 hover:text-gray-500 hover:bg-gray-100 focus:outline-none focus:bg-gray-100 focus:text-gray-500 transition duration-150 ease-in-out">
-                    <svg class="h-6 w-6" stroke="currentColor" fill="none" viewBox="0 0 24 24">
-                        <path :class="{'hidden': open, 'inline-flex': ! open }" class="inline-flex" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
-                        <path :class="{'hidden': ! open, 'inline-flex': open }" class="hidden" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-                    </svg>
-                </button>
-            </div>
-        </div>
-    </div>
-
-    <!-- Responsive Navigation Menu -->
-    <div :class="{'block': open, 'hidden': ! open}" class="hidden sm:hidden">
-        <div class="pt-2 pb-3 space-y-1">
-            <x-responsive-nav-link :href="route('dashboard')" :active="request()->routeIs('dashboard')">
-                {{ __('Dashboard') }}
-            </x-responsive-nav-link>
+    <aside :class="open ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'" class="fixed inset-y-0 left-0 flex w-72 -translate-x-full flex-col border-r border-slate-800 bg-slate-950 text-white transition-transform duration-300 lg:translate-x-0">
+        <div class="flex h-20 items-center border-b border-white/10 px-6">
+            <a href="{{ route('portal') }}" class="flex items-center gap-3">
+                <span class="flex h-10 w-10 items-center justify-center rounded-xl bg-white"><img src="{{ asset('images/isg_logo.png') }}" alt="ISG Logo" class="h-7 w-auto"></span>
+                <span><span class="block text-sm font-bold tracking-wide">ISG MONITORING</span><span class="block text-[10px] uppercase tracking-[0.2em] text-slate-500">Operations portal</span></span>
+            </a>
+            <button type="button" @click="open = false" class="ml-auto text-slate-400 hover:text-white lg:hidden" title="Close menu" aria-label="Close menu">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
+            </button>
         </div>
 
-        <!-- Responsive Settings Options -->
-        <div class="pt-4 pb-1 border-t border-gray-200">
-            <div class="px-4">
-                <div class="font-medium text-base text-gray-800">{{ Auth::user()->name }}</div>
-                <div class="font-medium text-sm text-gray-500">{{ Auth::user()->email }}</div>
-            </div>
-
+        <div class="flex-1 overflow-y-auto px-4 py-7">
+            <p class="px-3 text-[10px] font-bold uppercase tracking-[0.25em] text-slate-500">Monitoring sites</p>
             <div class="mt-3 space-y-1">
-                <x-responsive-nav-link :href="route('profile.edit')">
-                    {{ __('Profile') }}
-                </x-responsive-nav-link>
-
-                <!-- Authentication -->
-                <form method="POST" action="{{ route('logout') }}">
-                    @csrf
-
-                    <x-responsive-nav-link :href="route('logout')"
-                            onclick="event.preventDefault();
-                                        this.closest('form').submit();">
-                        {{ __('Log Out') }}
-                    </x-responsive-nav-link>
-                </form>
+                <a href="{{ route('portal') }}" class="flex items-center gap-3 rounded-xl px-3 py-3 text-sm font-semibold transition {{ request()->routeIs('portal') ? 'bg-cyan-400/15 text-cyan-300' : 'text-slate-300 hover:bg-white/10 hover:text-white' }}"><span>▦</span> Portal</a>
+                @if(!auth()->user()->isViewer())
+                    <a href="{{ route('dashboard') }}" class="flex items-center gap-3 rounded-xl px-3 py-3 text-sm font-semibold transition {{ request()->routeIs('dashboard') ? 'bg-cyan-400/15 text-cyan-300' : 'text-slate-300 hover:bg-white/10 hover:text-white' }}"><span>⌁</span> VAPT Dashboard</a>
+                    <a href="{{ route('vapt.index') }}" class="flex items-center gap-3 rounded-xl px-3 py-3 text-sm font-semibold transition {{ request()->routeIs('vapt.*') ? 'bg-cyan-400/15 text-cyan-300' : 'text-slate-300 hover:bg-white/10 hover:text-white' }}"><span>▤</span> Monitored Systems</a>
+                @else
+                    <a href="{{ route('viewer.dashboard') }}" class="flex items-center gap-3 rounded-xl px-3 py-3 text-sm font-semibold transition {{ request()->routeIs('viewer.*') ? 'bg-cyan-400/15 text-cyan-300' : 'text-slate-300 hover:bg-white/10 hover:text-white' }}"><span>◉</span> Viewer Portal</a>
+                @endif
+                <a href="{{ route('calendar') }}" class="flex items-center gap-3 rounded-xl px-3 py-3 text-sm font-semibold transition {{ request()->routeIs('calendar') ? 'bg-amber-400/15 text-amber-300' : 'text-slate-300 hover:bg-white/10 hover:text-white' }}"><span>□</span> Calendar</a>
+                @if(auth()->user()->isSuperAdmin())
+                    <a href="{{ route('register') }}" class="flex items-center gap-3 rounded-xl px-3 py-3 text-sm font-semibold transition {{ request()->routeIs('register') ? 'bg-cyan-400/15 text-cyan-300' : 'text-slate-300 hover:bg-white/10 hover:text-white' }}"><span>＋</span> User Management</a>
+                @endif
             </div>
         </div>
+
+        <div class="border-t border-white/10 p-4">
+            <a href="{{ route('profile.edit') }}" class="mb-3 flex items-center gap-3 rounded-xl px-3 py-3 transition hover:bg-white/10">
+                <span class="flex h-9 w-9 items-center justify-center rounded-full bg-cyan-400/15 text-cyan-300">◉</span>
+                <span class="min-w-0"><span class="block truncate text-sm font-semibold">{{ Auth::user()->username }}</span><span class="block text-[10px] uppercase tracking-wider text-slate-500">{{ Auth::user()->role }}</span></span>
+            </a>
+            <form method="POST" action="{{ route('logout') }}">
+                @csrf
+                <button type="submit" class="flex w-full items-center gap-3 rounded-xl px-3 py-3 text-sm font-semibold text-slate-400 transition hover:bg-red-400/10 hover:text-red-300"><span>↪</span> Sign out</button>
+            </form>
+        </div>
+    </aside>
+
+    <div class="flex min-h-20 items-center border-b border-slate-200 bg-white px-4 lg:hidden">
+        <button type="button" @click="open = true" class="flex h-10 w-10 items-center justify-center rounded-xl text-slate-600 hover:bg-slate-100" title="Open menu" aria-label="Open menu"><span class="text-xl">☰</span></button>
+        <span class="ml-3 text-sm font-bold tracking-wide text-slate-800">ISG MONITORING</span>
     </div>
 </nav>

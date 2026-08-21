@@ -9,10 +9,19 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Middleware\CheckActivityUserRole;
 
 Route::get('/', function () {
+    return redirect()->route('login');
+});
+
+Route::get('/login', function () {
     return view('welcome');
-})->middleware('guest')->name('welcome.login');
+})->name('login');
 
 Route::middleware(['auth'])->group(function () {
+
+    // Monitoring site selection portal
+    Route::get('/portal', function () {
+        return view('portal');
+    })->name('portal');
 
     // Dedicated Viewer Module Route
     Route::get('/viewer/dashboard', [ViewerController::class, 'index'])->name('viewer.dashboard');

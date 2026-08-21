@@ -75,6 +75,7 @@ class VaptSystemController extends Controller
             'url' => 'nullable|url|max:255',
             'personnel_in_charge' => 'nullable|string|max:255',
             'status' => 'required|string',
+            'date_of_last_va' => 'nullable|date',
             'remarks' => 'nullable|string',
         ]);
 
@@ -86,13 +87,16 @@ class VaptSystemController extends Controller
     /**
      * Update the specified system in storage.
      */
-    public function update(Request $request, VaptSystem $vapt)
+    public function update(Request $request, string $vapt)
     {
+        $vapt = VaptSystem::findOrFail(VaptSystem::decryptId($vapt));
+
         $request->validate([
             'name' => 'required|string|max:255',
             'url' => 'nullable|url|max:255',
             'personnel_in_charge' => 'nullable|string|max:255',
             'status' => 'required|string',
+            'date_of_last_va' => 'nullable|date',
             'remarks' => 'nullable|string',
         ]);
 
@@ -104,8 +108,10 @@ class VaptSystemController extends Controller
     /**
      * Remove the specified system from storage.
      */
-    public function destroy(VaptSystem $vapt)
+    public function destroy(string $vapt)
     {
+        $vapt = VaptSystem::findOrFail(VaptSystem::decryptId($vapt));
+
         // STRICT CHECK: Block Admins from deleting
         if (!auth()->user()->isSuperAdmin()) {
             return redirect()->route('vapt.index')->with('error', 'Unauthorized Action: Only Superadmins can delete systems.');
@@ -215,6 +221,9 @@ class VaptSystemController extends Controller
                 'extendedProps'   => [
                     'category'          => 'ACTIVITY',
                     'type'              => $act->type,
+                    'activity_id'       => $act->id,
+                    'start_time'        => Carbon::parse($act->start_time)->format('Y-m-d\TH:i'),
+                    'end_time'          => $act->end_time ? Carbon::parse($act->end_time)->format('Y-m-d\TH:i') : '',
                     'military_start'    => $militaryStart,
                     'military_end'      => $militaryEnd,
                     'agenda'            => $act->agenda ?? 'N/A',
@@ -278,7 +287,7 @@ class VaptSystemController extends Controller
             'type'       => 'required|string',
             'start_time' => 'required|date',
             'end_time'   => 'nullable|date|after_or_equal:start_time',
-            'agenda'     => 'required|string',
+            'agenda'     => 'nullable|string',
         ]);
 
         $activity->update([
@@ -302,8 +311,8 @@ class VaptSystemController extends Controller
      */
     public function destroyActivity($id)
     {
-        // Only Activity Admins, Admins, and Superadmins can delete
-        if (!auth()->user()->isActivityAdmin() && !auth()->user()->isAdmin() && !auth()->user()->isSuperAdmin()) {
+        // Only admins and superadmins can delete
+        if (!auth()->user()->isAdmin()) {
             abort(403, 'Unauthorized action.');
         }
 

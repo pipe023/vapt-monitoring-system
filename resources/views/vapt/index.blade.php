@@ -1,9 +1,12 @@
 <x-app-layout>
     <x-slot name="header">
-        <div class="flex justify-between items-center">
-            <h2 class="font-semibold text-xl text-gray-800 leading-tight">
-                {{ __('Monitored Systems Management') }}
-            </h2>
+        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+            <div>
+                <h2 class="font-semibold text-xl text-gray-800 leading-tight">
+                    {{ __('Monitored Systems Management') }}
+                </h2>
+                <p class="text-xs text-gray-400 mt-0.5">Real-time tracking for monitored systems and assessment records.</p>
+            </div>
             <div class="flex space-x-2">
                 <a href="{{ route('vapt.export') }}" class="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 font-medium text-sm rounded-xl transition">
                     Export CSV
@@ -19,8 +22,8 @@
         </div>
     </x-slot>
 
-    <div class="py-10">
-        <div class="max-w-7xl mx-auto sm:px-6 lg:px-8 space-y-6">
+    <div class="py-8">
+        <div class="w-full max-w-[98%] mx-auto sm:px-6 lg:px-8 space-y-6">
 
             <!-- Flash Success Message -->
             @if(session('success'))
@@ -39,6 +42,7 @@
                                 <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">URL</th>
                                 <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Personnel In Charge</th>
                                 <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date of Last VA</th>
                                 <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Remarks</th>
                                 
                                 @if(auth()->user()->isAdmin())
@@ -72,20 +76,22 @@
                                             {{ $system->status }}
                                         </span>
                                     </td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                        {{ $system->date_of_last_va ? \Carbon\Carbon::parse($system->date_of_last_va)->format('d-M-y') : 'N/A' }}
+                                    </td>
                                     <td class="px-6 py-4 text-sm text-gray-500 max-w-[250px] whitespace-normal break-words">
                                             {{ $system->remarks }}
-</td>
-
+                                    </td>
                                     @if(auth()->user()->isAdmin())
                                         <td class="px-6 py-4 text-right space-x-2">
                                             <!-- EDIT BUTTON (Visible to Admin & Superadmin) -->
-                                            <button type="button" data-system="{{ $system }}" onclick="openEditModal(this)" class="text-indigo-600 hover:text-indigo-900 font-semibold">
+                                            <button type="button" data-system="{{ $system }}" data-vapt-id="{{ $system->encrypted_id }}" onclick="openEditModal(this)" class="text-indigo-600 hover:text-indigo-900 font-semibold">
                                                 Edit
                                             </button>
                                             
                                             <!-- DELETE BUTTON (Restricted to Superadmin ONLY) -->
                                             @if(auth()->user()->isSuperAdmin())
-                                                <form action="{{ route('vapt.destroy', $system) }}" method="POST" class="inline">
+                                                <form action="{{ route('vapt.destroy', ['vapt' => $system->encrypted_id]) }}" method="POST" class="inline">
                                                     @csrf
                                                     @method('DELETE')
                                                     <button type="submit" onclick="return confirm('Are you sure you want to delete this system?')" class="text-red-600 hover:text-red-900 font-semibold ml-2">
@@ -144,6 +150,10 @@
                             <option value="COMPLETED">COMPLETED</option>
                         </select>
                     </div>
+                    <div class="mt-4">
+                        <label for="date_of_last_va" class="block text-sm font-medium text-gray-700">Date of Last VA</label>
+                        <input type="date" name="date_of_last_va" id="date_of_last_va" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm" required>
+                    </div>
                     <div>
                         <label class="block text-xs font-semibold text-gray-600 uppercase tracking-wider mb-1">Remarks</label>
                         <textarea name="remarks" rows="2" placeholder="Add optional notes..." class="w-full text-sm rounded-xl border-gray-200 focus:border-indigo-500 focus:ring-indigo-500"></textarea>
@@ -166,7 +176,7 @@
                     <button type="button" onclick="closeEditModal()" class="text-gray-400 hover:text-gray-600 text-xl font-bold transition">&times;</button>
                 </div>
 
-                <form id="editForm" method="POST" class="p-6 space-y-4">
+                <form id="editVaptForm" method="POST" class="p-6 space-y-4">
                     @csrf
                     @method('PUT')
                     <div>
@@ -189,6 +199,10 @@
                             <option value="ONGOING PATCHING">ONGOING PATCHING</option>
                             <option value="COMPLETED">COMPLETED</option>
                         </select>
+                    </div>
+                    <div class="mt-4">
+                        <label for="edit_date_of_last_va" class="block text-sm font-medium text-gray-700">Date of Last VA</label>
+                        <input type="date" id="edit_date_of_last_va" name="date_of_last_va" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
                     </div>
                     <div>
                         <label class="block text-xs font-semibold text-gray-600 uppercase tracking-wider mb-1">Remarks</label>
@@ -234,15 +248,17 @@
         }
 
         function openEditModal(buttonElement) {
-            // Safely parse JSON from the data attribute
             const system = JSON.parse(buttonElement.getAttribute('data-system'));
+            const encryptedId = buttonElement.getAttribute('data-vapt-id');
             
-            document.getElementById('editForm').action = '/vapt/' + system.id;
+            document.getElementById('editVaptForm').action = '/vapt/' + encodeURIComponent(encryptedId);
+
             document.getElementById('edit_name').value = system.name || '';
             document.getElementById('edit_url').value = system.url || '';
             document.getElementById('edit_personnel').value = system.personnel_in_charge || '';
-            document.getElementById('edit_status').value = system.status || 'ONGOING VAPT';
+            document.getElementById('edit_status').value = system.status || '';
             document.getElementById('edit_remarks').value = system.remarks || '';
+            document.getElementById('edit_date_of_last_va').value = system.date_of_last_va || '';
             
             const modal = document.getElementById('editSystemModal');
             const container = document.getElementById('editModalContainer');

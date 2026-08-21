@@ -49,12 +49,13 @@
     <div id="addActivityModal" class="hidden fixed inset-0 bg-gray-900/60 backdrop-blur-md z-50 flex items-center justify-center transition-opacity duration-300 opacity-0">
         <div class="bg-white rounded-2xl shadow-2xl border border-gray-100 w-full max-w-lg mx-4 overflow-hidden transform transition-all duration-300 scale-95" id="addActivityModalContainer">
             <div class="px-6 py-4 border-b border-gray-100 flex justify-between items-center bg-gray-50/50">
-                <h3 class="text-base font-bold text-gray-800">Add Calendar Activity</h3>
+                <h3 id="activityModalTitle" class="text-base font-bold text-gray-800">Add Calendar Activity</h3>
                 <button type="button" onclick="closeActivityModal()" class="text-gray-400 hover:text-gray-600 text-xl font-bold transition">&times;</button>
             </div>
 
-            <form action="{{ route('calendar.activity.store') }}" method="POST" class="p-6 space-y-4">
+            <form id="activityForm" action="{{ route('calendar.activity.store') }}" method="POST" class="p-6 space-y-4">
                 @csrf
+                <input type="hidden" name="_method" id="activityFormMethod" value="POST">
 
                 <!-- ACTIVITY TYPE SELECTION -->
                 <div>
@@ -79,13 +80,14 @@
                     </div>
                 </div>
 
+                <!-- COMMON AGENDA FIELD -->
+                <div>
+                    <label class="block text-xs font-semibold text-gray-600 uppercase tracking-wider mb-1">Agenda</label>
+                    <input type="text" name="agenda" placeholder="e.g. Annual Planning Session" class="w-full text-sm rounded-xl border-gray-200 focus:border-indigo-500 focus:ring-indigo-500">
+                </div>
+
                 <!-- DYNAMIC FIELDS FOR CONFERENCE / TIAC -->
                 <div id="fields_conference_tiac" class="space-y-4">
-                    <div>
-                        <label class="block text-xs font-semibold text-gray-600 uppercase tracking-wider mb-1">Agenda</label>
-                        <input type="text" name="agenda" placeholder="e.g. Annual Planning Session" class="w-full text-sm rounded-xl border-gray-200 focus:border-indigo-500 focus:ring-indigo-500">
-                    </div>
-
                     <div>
                         <label class="block text-xs font-semibold text-gray-600 uppercase tracking-wider mb-1">Presiding Officer</label>
                         <input type="text" name="presiding_officer" placeholder="e.g. John Doe" class="w-full text-sm rounded-xl border-gray-200 focus:border-indigo-500 focus:ring-indigo-500">
@@ -123,7 +125,7 @@
 
                 <div class="pt-4 flex justify-end space-x-2 border-t border-gray-100">
                     <button type="button" onclick="closeActivityModal()" class="px-4 py-2 bg-gray-100 text-gray-700 font-medium text-sm rounded-xl hover:bg-gray-200 transition">Cancel</button>
-                    <button type="submit" class="px-4 py-2 bg-indigo-600 text-white font-semibold text-sm rounded-xl hover:bg-indigo-700 shadow-sm transition">Save Activity</button>
+                    <button id="activityFormSubmit" type="submit" class="px-4 py-2 bg-indigo-600 text-white font-semibold text-sm rounded-xl hover:bg-indigo-700 shadow-sm transition">Save Activity</button>
                 </div>
             </form>
         </div>
@@ -143,7 +145,19 @@
                 <!-- Dynamically populated via JS -->
             </div>
 
-            <div class="px-6 py-3 bg-gray-50 border-t border-gray-100 flex justify-end">
+            <div class="px-6 py-3 bg-gray-50 border-t border-gray-100 flex justify-end gap-2">
+                <div id="activityActions" class="hidden mr-auto flex gap-2">
+                    <button type="button" onclick="editSelectedActivity()" title="Edit activity" aria-label="Edit activity" class="inline-flex items-center justify-center w-9 h-9 text-indigo-600 bg-indigo-50 rounded-lg hover:bg-indigo-100 transition">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>
+                    </button>
+                    <form id="deleteActivityForm" method="POST" onsubmit="return confirm('Are you sure you want to delete this activity?')">
+                        @csrf
+                        @method('DELETE')
+                        <button type="submit" title="Delete activity" aria-label="Delete activity" class="inline-flex items-center justify-center w-9 h-9 text-red-600 bg-red-50 rounded-lg hover:bg-red-100 transition">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 6h18"/><path d="M8 6V4h8v2"/><path d="M19 6v14H5V6"/><path d="M10 11v5"/><path d="M14 11v5"/></svg>
+                        </button>
+                    </form>
+                </div>
                 <button type="button" onclick="closeDetailsModal()" class="px-4 py-2 bg-gray-200 text-gray-700 font-medium text-xs rounded-xl hover:bg-gray-300 transition">Close</button>
             </div>
         </div>
@@ -290,10 +304,13 @@
                 const event = info.event;
                 const props = event.extendedProps;
                 const body = document.getElementById('modal_body');
+                const activityActions = document.getElementById('activityActions');
+                const deleteActivityForm = document.getElementById('deleteActivityForm');
 
                 document.getElementById('modal_title').innerText = event.title;
 
                 if (props.category === 'VAPT') {
+                    activityActions.classList.add('hidden');
                     body.innerHTML = `
                         <div>
                             <strong class="text-xs text-gray-400 uppercase block">Date / Time</strong>
@@ -317,6 +334,9 @@
                         </div>
                     `;
                 } else {
+                    activityActions.classList.remove('hidden');
+                    deleteActivityForm.action = `/calendar/activity/${props.activity_id}`;
+                    window.selectedActivity = props;
                     let dynamicInfo = '';
                     if (props.type === 'Conference' || props.type === 'TIAC') {
                         dynamicInfo = `
@@ -373,6 +393,12 @@
 
         // ADD ACTIVITY MODAL TOGGLES
         function openActivityModal() {
+            const form = document.getElementById('activityForm');
+            form.reset();
+            form.action = '{{ route('calendar.activity.store') }}';
+            document.getElementById('activityFormMethod').value = 'POST';
+            document.getElementById('activityModalTitle').innerText = 'Add Calendar Activity';
+            document.getElementById('activityFormSubmit').innerText = 'Save Activity';
             handleTypeChange();
             const modal = document.getElementById('addActivityModal');
             const container = document.getElementById('addActivityModalContainer');
@@ -383,6 +409,29 @@
                 container.classList.remove('scale-95');
                 container.classList.add('scale-100');
             }, 10);
+        }
+
+        function editSelectedActivity() {
+            const activity = window.selectedActivity;
+            const form = document.getElementById('activityForm');
+
+            closeDetailsModal();
+            openActivityModal();
+            form.action = `/calendar/activity/${activity.activity_id}`;
+            document.getElementById('activityFormMethod').value = 'PUT';
+            document.getElementById('activityModalTitle').innerText = 'Edit Calendar Activity';
+            document.getElementById('activityFormSubmit').innerText = 'Update Activity';
+            document.getElementById('activity_type').value = activity.type;
+            form.elements.start_time.value = activity.start_time;
+            form.elements.end_time.value = activity.end_time || '';
+            form.elements.agenda.value = activity.agenda === 'N/A' ? '' : activity.agenda;
+            form.elements.presiding_officer.value = activity.presiding_officer === 'N/A' ? '' : activity.presiding_officer;
+            form.elements.attendees.value = activity.attendees === 'N/A' ? '' : activity.attendees;
+            form.elements.venue.value = activity.venue === 'N/A' ? '' : activity.venue;
+            form.elements.personnel.value = activity.personnel === 'N/A' ? '' : activity.personnel;
+            form.elements.location.value = activity.location === 'N/A' ? '' : activity.location;
+            form.elements.note.value = activity.note === 'None' ? '' : activity.note;
+            handleTypeChange();
         }
 
         function closeActivityModal() {

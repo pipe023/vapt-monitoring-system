@@ -15,13 +15,22 @@
         @vite(['resources/css/app.css', 'resources/js/app.js'])
     </head>
     <body class="font-sans antialiased">
-        <div class="min-h-screen bg-gray-100">
+        <div id="page-loader" class="hidden fixed inset-0 z-[100] flex items-center justify-center bg-slate-950/65 backdrop-blur-sm" role="status" aria-live="polite" aria-label="Loading">
+            <div class="flex flex-col items-center gap-5 text-cyan-200">
+                <div class="relative flex h-[5.5rem] w-[5.5rem] items-center justify-center">
+                    <span class="cyber-loader-ring"></span>
+                    <span class="cyber-loader-core"></span>
+                </div>
+                <span class="cyber-loader-label text-[10px] font-bold uppercase">Loading module</span>
+            </div>
+        </div>
+        <div class="min-h-screen bg-gray-100 lg:pl-72">
             @include('layouts.navigation')
 
             <!-- Page Heading -->
             @isset($header)
                 <header class="bg-white shadow">
-                    <div class="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
+                    <div class="w-full max-w-[98%] mx-auto py-6 px-4 sm:px-6 lg:px-8">
                         {{ $header }}
                     </div>
                 </header>
