@@ -32,13 +32,21 @@
                 </div>
             @endif
 
-            <!-- SYSTEMS TABLE -->
-            <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
-                <div class="overflow-x-auto">
-                    <table class="min-w-full divide-y divide-gray-200">
+            <!-- SYSTEMS TABLES BY NETWORK -->
+            @foreach($networkSystems as $network => $networkList)
+                <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
+                    <div class="mb-4 flex items-center justify-between border-b border-gray-100 pb-3">
+                        <div>
+                            <h3 class="text-lg font-semibold {{ $network === 'RED NETWORK' ? 'text-red-700' : ($network === 'GRAY NETWORK' ? 'text-slate-700' : 'text-gray-500') }}">{{ ucwords(strtolower($network)) }}</h3>
+                            <p class="text-xs text-gray-400 mt-0.5">{{ $networkList->count() }} monitored {{ $networkList->count() === 1 ? 'system' : 'systems' }}</p>
+                        </div>
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table class="min-w-full divide-y divide-gray-200">
                         <thead class="bg-gray-50">
                             <tr>
                                 <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">System Name</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Network</th>
                                 <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">URL</th>
                                 <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Personnel In Charge</th>
                                 <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
@@ -50,10 +58,15 @@
                                 @endif
                             </tr>
                         </thead>
-                        <tbody class="bg-white divide-y divide-gray-200 text-sm">
-                            @forelse ($systems as $system)
+                            <tbody class="bg-white divide-y divide-gray-200 text-sm">
+                            @forelse ($networkList as $system)
                                 <tr class="hover:bg-gray-50">
                                     <td class="px-6 py-4 font-semibold text-gray-900">{{ $system->name }}</td>
+                                    <td class="px-6 py-4">
+                                        <span class="px-2.5 py-1 inline-flex text-xs font-semibold rounded-full {{ $system->network === 'RED NETWORK' ? 'bg-red-100 text-red-800' : 'bg-slate-100 text-slate-700' }}">
+                                            {{ $system->network ?? 'UNASSIGNED' }}
+                                        </span>
+                                    </td>
                                     <td class="px-6 py-4 text-blue-600">
                                         @if($system->url)
                                             <a href="{{ $system->url }}" target="_blank" class="hover:underline">{{ $system->url }}</a>
@@ -104,15 +117,16 @@
                                 </tr>
                             @empty
                                 <tr>
-                                    <td colspan="{{ auth()->user()->isAdmin() ? '6' : '5' }}" class="px-6 py-4 text-center text-gray-400">
-                                        No monitored systems found.
+                                    <td colspan="{{ auth()->user()->isAdmin() ? '8' : '7' }}" class="px-6 py-4 text-center text-gray-400">
+                                        No systems assigned to this network.
                                     </td>
                                 </tr>
                             @endforelse
-                        </tbody>
-                    </table>
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
-            </div>
+            @endforeach
         </div>
     </div>
 
@@ -132,6 +146,14 @@
                     <div>
                         <label class="block text-xs font-semibold text-gray-600 uppercase tracking-wider mb-1">System Name</label>
                         <input type="text" name="name" required placeholder="e.g. Finance Portal" class="w-full text-sm rounded-xl border-gray-200 focus:border-indigo-500 focus:ring-indigo-500">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-gray-600 uppercase tracking-wider mb-1">Network</label>
+                        <select name="network" required class="w-full text-sm rounded-xl border-gray-200 focus:border-indigo-500 focus:ring-indigo-500">
+                            <option value="" disabled selected>Select network</option>
+                            <option value="RED NETWORK">Red Network</option>
+                            <option value="GRAY NETWORK">Gray Network</option>
+                        </select>
                     </div>
                     <div>
                         <label class="block text-xs font-semibold text-gray-600 uppercase tracking-wider mb-1">URL (Optional)</label>
@@ -182,6 +204,14 @@
                     <div>
                         <label class="block text-xs font-semibold text-gray-600 uppercase tracking-wider mb-1">System Name</label>
                         <input type="text" id="edit_name" name="name" required class="w-full text-sm rounded-xl border-gray-200 focus:border-indigo-500 focus:ring-indigo-500">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-gray-600 uppercase tracking-wider mb-1">Network</label>
+                        <select id="edit_network" name="network" required class="w-full text-sm rounded-xl border-gray-200 focus:border-indigo-500 focus:ring-indigo-500">
+                            <option value="">Select network</option>
+                            <option value="RED NETWORK">Red Network</option>
+                            <option value="GRAY NETWORK">Gray Network</option>
+                        </select>
                     </div>
                     <div>
                         <label class="block text-xs font-semibold text-gray-600 uppercase tracking-wider mb-1">URL</label>
@@ -254,6 +284,7 @@
             document.getElementById('editVaptForm').action = '/vapt/' + encodeURIComponent(encryptedId);
 
             document.getElementById('edit_name').value = system.name || '';
+            document.getElementById('edit_network').value = system.network || '';
             document.getElementById('edit_url').value = system.url || '';
             document.getElementById('edit_personnel').value = system.personnel_in_charge || '';
             document.getElementById('edit_status').value = system.status || '';

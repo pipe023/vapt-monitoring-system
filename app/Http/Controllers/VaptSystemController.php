@@ -61,8 +61,13 @@ class VaptSystemController extends Controller
         }
 
         $systems = $query->latest()->get();
+        $networkSystems = collect([
+            'RED NETWORK' => $systems->where('network', 'RED NETWORK'),
+            'GRAY NETWORK' => $systems->where('network', 'GRAY NETWORK'),
+            'UNASSIGNED' => $systems->whereNull('network'),
+        ]);
 
-        return view('vapt.index', compact('systems'));
+        return view('vapt.index', compact('systems', 'networkSystems'));
     }
 
     /**
@@ -72,6 +77,7 @@ class VaptSystemController extends Controller
     {
         $request->validate([
             'name' => 'required|string|max:255',
+            'network' => 'required|in:RED NETWORK,GRAY NETWORK',
             'url' => 'nullable|url|max:255',
             'personnel_in_charge' => 'nullable|string|max:255',
             'status' => 'required|string',
@@ -93,6 +99,7 @@ class VaptSystemController extends Controller
 
         $request->validate([
             'name' => 'required|string|max:255',
+            'network' => 'required|in:RED NETWORK,GRAY NETWORK',
             'url' => 'nullable|url|max:255',
             'personnel_in_charge' => 'nullable|string|max:255',
             'status' => 'required|string',

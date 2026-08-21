@@ -20,6 +20,7 @@ class VaptSystem extends Model
      */
     protected $fillable = [
         'name',
+        'network',
         'url',
         'personnel_in_charge',
         'status',
