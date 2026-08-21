@@ -31,6 +31,11 @@ class ViewerController extends Controller
         }
 
         $systems = $query->latest()->get();
+        $networkSystems = collect([
+            'RED NETWORK' => $systems->where('network', 'RED NETWORK'),
+            'GRAY NETWORK' => $systems->where('network', 'GRAY NETWORK'),
+            'UNASSIGNED' => $systems->whereNull('network'),
+        ]);
         $networkCounts = $systems->groupBy('network')->map->count()->toArray();
 
         // 3. Map systems to FullCalendar events for Status Calendar
@@ -52,6 +57,6 @@ class ViewerController extends Controller
             ];
         });
 
-        return view('viewer.dashboard', compact('statusCounts', 'systems', 'calendarEvents', 'networkCounts'));
+        return view('viewer.dashboard', compact('statusCounts', 'systems', 'calendarEvents', 'networkCounts', 'networkSystems'));
     }
 }

@@ -27,10 +27,10 @@
             </div>
 
             <!-- MAIN SIDE-BY-SIDE GRID -->
-            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 1.5rem; align-items: start;">
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 1.5rem; align-items: stretch;">
                 
-                <!-- LEFT CONTAINER: Pie Chart + Status Cards (Spans 2 columns on wide screens) -->
-                <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6" style="grid-column: span 2 / span 2;">
+                <!-- LEFT CONTAINER: Pie Chart + Status Cards -->
+                <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6" style="grid-column: span 1 / span 2;">
                     <h3 class="text-lg font-medium text-gray-800 mb-6 border-b border-gray-100 pb-3">Status Overview</h3>
                     
                     <!-- HORIZONTAL SPLIT: Chart Left, Cards Right -->
@@ -73,88 +73,89 @@
                     </div>
                 </div>
 
-                <!-- RIGHT CONTAINER: Mini Calendar (1 column) -->
-                <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-5" style="grid-column: span 1 / span 1;">
+                <!-- RIGHT CONTAINER: Mini Calendar -->
+                <div class="h-full flex flex-col bg-white rounded-2xl shadow-sm border border-gray-100 p-5" style="grid-column: span 1 / span 1;">
                     <div class="mb-3 flex justify-between items-center">
                         <h3 class="text-base font-medium text-gray-800">Status Updates</h3>
                         <span class="text-[10px] text-gray-400 uppercase font-semibold">Calendar</span>
                     </div>
                     
                     <!-- Calendar element -->
-                    <div id="calendar" class="text-xs"></div>
+                    <div id="calendar" class="flex-1 min-h-0 text-xs"></div>
                 </div>
 
             </div>
-            <!-- MONITORED SYSTEMS READ-ONLY TABLE -->
-                        <div class="mt-8 bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
-                            <div class="mb-4 flex justify-center items-center border-b border-gray-100 pb-3">
-                                <div>
-                                    <h3 class="text-lg font-medium text-gray-800">Monitored Systems Overview</h3>
-                                    <p class="text-xs text-gray-400 mt-0.5">Live status records of all monitored systems.</p>
-                                </div>
-                            </div>
+            <!-- MONITORED SYSTEMS READ-ONLY TABLES BY NETWORK -->
+            <div class="mt-8 space-y-6">
+                <div class="mb-4">
+                    <h3 class="text-lg font-medium text-gray-800">Monitored Systems Overview</h3>
+                    <p class="text-xs text-gray-400 mt-0.5">Live status records separated by network.</p>
+                </div>
 
-                            <div class="overflow-x-auto w-full">
-                                <table class="w-full text-left border-collapse min-w-max">
-                                    <thead class="bg-gray-50">
-                                        <tr>
-                                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">System Name</th>
-                                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">URL</th>
-                                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Personnel In Charge</th>
-                                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-                                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Remarks</th>
-                                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Last Updated</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody class="bg-white divide-y divide-gray-200 text-sm">
-                                        @forelse ($systems as $system)
-                                            <tr class="hover:bg-gray-50">
-                                                <td class="px-6 py-4 whitespace-nowrap font-medium text-gray-900">
-                                                    {{ $system->name }}
-                                                </td>
-                                                <td class="px-6 py-4 whitespace-nowrap text-blue-600">
-                                                    @if($system->url)
-                                                        <a href="{{ $system->url }}" target="_blank" class="hover:underline">{{ $system->url }}</a>
-                                                    @else
-                                                        <span class="text-gray-400">N/A</span>
-                                                    @endif
-                                                </td>
-                                                <td class="px-6 py-4 whitespace-nowrap text-gray-700">
-                                                    {{ $system->personnel_in_charge ?? 'N/A' }}
-                                                </td>
-                                                <td class="px-6 py-4 whitespace-nowrap">
-                                                    @php
-                                                        $badgeClasses = match($system->status) {
-                                                            'ONGOING VAPT'     => 'bg-blue-100 text-blue-800',
-                                                            'FOR PATCHING'     => 'bg-red-100 text-red-800',
-                                                            'ONGOING PATCHING' => 'bg-orange-100 text-orange-800',
-                                                            'COMPLETED'        => 'bg-green-100 text-green-800',
-                                                            default            => 'bg-gray-100 text-gray-800'
-                                                        };
-                                                    @endphp
-                                                    <span class="px-2.5 py-1 inline-flex text-xs leading-5 font-semibold rounded-full {{ $badgeClasses }}">
-                                                        {{ $system->status }}
-                                                    </span>
-                                                </td>
-                                                <td class="px-6 py-4 text-gray-500 max-w-xs truncate">
-                                                    {{ $system->remarks ?? 'N/A' }}
-                                                </td>
-                                                <td class="px-6 py-4 whitespace-nowrap text-gray-500 text-xs">
-                                                    {{ $system->updated_at->format('M d, Y h:i A') }}
-                                                </td>
-                                            </tr>
-                                        @empty
-                                            <tr>
-                                                <td colspan="6" class="px-6 py-4 text-center text-gray-400">
-                                                    No monitored systems found.
-                                                </td>
-                                            </tr>
-                                        @endforelse
-                                    </tbody>
-                                </table>
+                @foreach($networkSystems as $network => $networkList)
+                    <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
+                        <div class="mb-4 flex items-center justify-between border-b border-gray-100 pb-3">
+                            <div>
+                                <h4 class="text-base font-semibold {{ $network === 'RED NETWORK' ? 'text-red-700' : ($network === 'GRAY NETWORK' ? 'text-slate-700' : 'text-gray-500') }}">{{ ucwords(strtolower($network)) }}</h4>
+                                <p class="text-xs text-gray-400 mt-0.5">{{ $networkList->count() }} monitored {{ $networkList->count() === 1 ? 'system' : 'systems' }}</p>
                             </div>
                         </div>
+
+                        <div class="overflow-x-auto w-full">
+                            <table class="min-w-full divide-y divide-gray-200">
+                                <thead class="bg-gray-50">
+                                    <tr>
+                                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">System Name</th>
+                                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Network</th>
+                                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">URL</th>
+                                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Personnel In Charge</th>
+                                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Remarks</th>
+                                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Last Updated</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="bg-white divide-y divide-gray-200 text-sm">
+                                    @forelse ($networkList as $system)
+                                        <tr class="hover:bg-gray-50">
+                                            <td class="px-6 py-4 whitespace-nowrap font-medium text-gray-900">{{ $system->name }}</td>
+                                            <td class="px-6 py-4 whitespace-nowrap">
+                                                <span class="px-2.5 py-1 inline-flex text-xs font-semibold rounded-full {{ $system->network === 'RED NETWORK' ? 'bg-red-100 text-red-800' : 'bg-slate-100 text-slate-700' }}">{{ $system->network ?? 'UNASSIGNED' }}</span>
+                                            </td>
+                                            <td class="px-6 py-4 whitespace-nowrap text-blue-600">
+                                                @if($system->url)
+                                                    <a href="{{ $system->url }}" target="_blank" class="hover:underline">{{ $system->url }}</a>
+                                                @else
+                                                    <span class="text-gray-400">N/A</span>
+                                                @endif
+                                            </td>
+                                            <td class="px-6 py-4 whitespace-nowrap text-gray-700">{{ $system->personnel_in_charge ?? 'N/A' }}</td>
+                                            <td class="px-6 py-4 whitespace-nowrap">
+                                                @php
+                                                    $badgeClasses = match($system->status) {
+                                                        'ONGOING VAPT'     => 'bg-blue-100 text-blue-800',
+                                                        'FOR PATCHING'     => 'bg-red-100 text-red-800',
+                                                        'ONGOING PATCHING' => 'bg-orange-100 text-orange-800',
+                                                        'COMPLETED'        => 'bg-green-100 text-green-800',
+                                                        default            => 'bg-gray-100 text-gray-800'
+                                                    };
+                                                @endphp
+                                                <span class="px-2.5 py-1 inline-flex text-xs leading-5 font-semibold rounded-full {{ $badgeClasses }}">{{ $system->status }}</span>
+                                            </td>
+                                            <td class="px-6 py-4 text-sm text-gray-500 max-w-[250px] whitespace-normal break-words">{{ $system->remarks }}</td>
+                                            <td class="px-6 py-4 whitespace-nowrap text-gray-500 text-xs">{{ $system->updated_at->format('M d, Y h:i A') }}</td>
+                                        </tr>
+                                    @empty
+                                        <tr>
+                                            <td colspan="7" class="px-6 py-4 text-center text-gray-400">No systems assigned to this network.</td>
+                                        </tr>
+                                    @endforelse
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                @endforeach
                 </div>
+            </div>
 
         </div>
 
@@ -238,8 +239,8 @@
                     right: 'today'
                 },
                 events: eventsData,
-                height: 360,
-                contentHeight: 300,
+                height: '100%',
+                contentHeight: 'auto',
                 
                 // --- COLLAPSE TO FIGURES WHEN 4 OR MORE EVENTS EXIST ---
                 dayMaxEvents: 3, // Shows up to 3 individual event badges; 4 or more automatically collapses into a figure "+X more" badge
