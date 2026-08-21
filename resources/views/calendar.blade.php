@@ -32,7 +32,6 @@
                 <span class="inline-flex items-center px-2.5 py-1 rounded-full bg-cyan-100 text-cyan-800"><span class="w-2 h-2 mr-1.5 bg-cyan-500 rounded-full"></span> Dispatch</span>
                 <span class="inline-flex items-center px-2.5 py-1 rounded-full bg-pink-100 text-pink-800"><span class="w-2 h-2 mr-1.5 bg-pink-500 rounded-full"></span> Mission</span>
                 <span class="inline-flex items-center px-2.5 py-1 rounded-full bg-amber-100 text-amber-800"><span class="w-2 h-2 mr-1.5 bg-amber-500 rounded-full"></span> TIAC</span>
-                <span class="inline-flex items-center px-2.5 py-1 rounded-full bg-red-100 text-red-800"><span class="w-2 h-2 mr-1.5 bg-red-500 rounded-full"></span> VAPT Status</span>
             </div>
 
             <!-- MAIN CALENDAR CONTAINER -->

@@ -38,7 +38,7 @@
                     <div class="mb-4 flex items-center justify-between border-b border-gray-100 pb-3">
                         <div>
                             <h3 class="text-lg font-semibold {{ $network === 'RED NETWORK' ? 'text-red-700' : ($network === 'GRAY NETWORK' ? 'text-slate-700' : 'text-gray-500') }}">{{ ucwords(strtolower($network)) }}</h3>
-                            <p class="text-xs text-gray-400 mt-0.5">{{ $networkList->count() }} monitored {{ $networkList->count() === 1 ? 'system' : 'systems' }}</p>
+                            <p class="text-xs text-gray-400 mt-0.5">{{ $networkList->count() }} monitored {{ Str::plural('system', $networkList->count()) }}</p>
                         </div>
                     </div>
                     <div class="overflow-x-auto">
@@ -117,7 +117,7 @@
                                 </tr>
                             @empty
                                 <tr>
-                                    <td colspan="{{ auth()->user()->isAdmin() ? '8' : '7' }}" class="px-6 py-4 text-center text-gray-400">
+                                    <td colspan="{{ auth()->user()->isAdmin() ? '7' : '6' }}" class="px-6 py-4 text-center text-gray-400">
                                         No systems assigned to this network.
                                     </td>
                                 </tr>

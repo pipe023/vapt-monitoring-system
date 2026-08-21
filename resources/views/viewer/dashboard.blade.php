@@ -58,6 +58,17 @@
                                     <span class="text-xs font-bold uppercase tracking-wider">{{ $status }}</span>
                                 </div>
                             @endforeach
+
+                            <div class="grid grid-cols-2 gap-3 pt-1">
+                                <div class="flex flex-col items-center justify-center rounded-xl border border-red-100 bg-red-50 p-3 text-red-700">
+                                    <span class="text-xl font-bold mb-0.5">{{ $networkCounts['RED NETWORK'] ?? 0 }}</span>
+                                    <span class="text-center text-xs font-bold uppercase tracking-wider">Red Network Systems</span>
+                                </div>
+                                <div class="flex flex-col items-center justify-center rounded-xl border border-slate-200 bg-slate-100 p-3 text-slate-700">
+                                    <span class="text-xl font-bold mb-0.5">{{ $networkCounts['GRAY NETWORK'] ?? 0 }}</span>
+                                    <span class="text-center text-xs font-bold uppercase tracking-wider">Gray Network Systems</span>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>

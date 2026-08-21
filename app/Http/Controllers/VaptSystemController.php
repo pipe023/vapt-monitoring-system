@@ -17,11 +17,17 @@ class VaptSystemController extends Controller
     public function dashboard()
     {
         $systems = VaptSystem::latest()->get();
+        $networkSystems = collect([
+            'RED NETWORK' => $systems->where('network', 'RED NETWORK'),
+            'GRAY NETWORK' => $systems->where('network', 'GRAY NETWORK'),
+            'UNASSIGNED' => $systems->whereNull('network'),
+        ]);
 
         $statusCounts = VaptSystem::selectRaw('status, count(*) as count')
             ->groupBy('status')
             ->pluck('count', 'status')
             ->toArray();
+        $networkCounts = $systems->groupBy('network')->map->count()->toArray();
 
         $calendarEvents = $systems->map(function ($system) {
             $color = match($system->status) {
@@ -41,7 +47,7 @@ class VaptSystemController extends Controller
             ];
         });
 
-        return view('dashboard', compact('statusCounts', 'calendarEvents', 'systems'));
+        return view('dashboard', compact('statusCounts', 'calendarEvents', 'systems', 'networkSystems', 'networkCounts'));
     }
 
     /**
@@ -244,8 +250,8 @@ class VaptSystemController extends Controller
             ];
         });
 
-        // Merge collections and re-index array numerically for clean JSON serialization
-        $calendarEvents = $vaptEvents->concat($activityEvents)->values()->toArray();
+        // Calendar displays created activities only.
+        $calendarEvents = $activityEvents->values()->toArray();
 
         return view('calendar', compact('calendarEvents'));
     }

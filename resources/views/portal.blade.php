@@ -52,7 +52,7 @@
                         <p class="mt-5 max-w-xl text-base leading-7 text-slate-300">Select the workspace you want to open. Your access level determines the tools available inside each site.</p>
                     </div>
 
-                    <div class="mt-12 grid gap-5 md:grid-cols-2">
+                    <div class="mt-12 grid gap-5 md:grid-cols-3">
                         @if(auth()->user()->isAdmin())
                             <a href="{{ route('vapt.index') }}" class="group relative overflow-hidden rounded-3xl border border-white/10 bg-white/[0.07] p-7 transition duration-300 hover:-translate-y-1 hover:border-cyan-300/50 hover:bg-white/[0.11]">
                                 <div class="flex items-start justify-between">
@@ -89,6 +89,18 @@
                             <h2 class="mt-8 text-xl font-bold text-white">Activity Calendar</h2>
                             <p class="mt-2 text-sm leading-6 text-slate-400">Coordinate conferences, dispatches, missions, and TIAC activities.</p>
                             <span class="mt-6 inline-flex rounded-full bg-amber-400/10 px-3 py-1 text-[10px] font-bold uppercase tracking-wider text-amber-300">Schedule monitoring</span>
+                        </a>
+
+                        <a href="{{ config('services.isg_status.url') }}" target="_blank" rel="noopener noreferrer" class="group relative overflow-hidden rounded-3xl border border-white/10 bg-white/[0.07] p-7 transition duration-300 hover:-translate-y-1 hover:border-emerald-300/50 hover:bg-white/[0.11]">
+                            <div class="flex items-start justify-between">
+                                <span class="flex h-12 w-12 items-center justify-center rounded-2xl bg-emerald-400/15 text-emerald-300">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a14 14 0 0 1 0 18M12 3a14 14 0 0 0 0 18"/></svg>
+                                </span>
+                                <svg class="text-slate-500 transition group-hover:translate-x-1 group-hover:text-emerald-300" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
+                            </div>
+                            <h2 class="mt-8 text-xl font-bold text-white">ISG Website Monitoring</h2>
+                            <p class="mt-2 text-sm leading-6 text-slate-400">Open the external ISG system status monitoring site.</p>
+                            <span class="mt-6 inline-flex rounded-full bg-emerald-400/10 px-3 py-1 text-[10px] font-bold uppercase tracking-wider text-emerald-300">External monitoring</span>
                         </a>
                     </div>
                 </section>

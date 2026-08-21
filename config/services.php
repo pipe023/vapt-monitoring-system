@@ -2,6 +2,10 @@
 
 return [
 
+    'isg_status' => [
+        'url' => env('ISG_STATUS_URL'),
+    ],
+
     /*
     |--------------------------------------------------------------------------
     | Third Party Services

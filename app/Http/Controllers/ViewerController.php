@@ -31,6 +31,7 @@ class ViewerController extends Controller
         }
 
         $systems = $query->latest()->get();
+        $networkCounts = $systems->groupBy('network')->map->count()->toArray();
 
         // 3. Map systems to FullCalendar events for Status Calendar
         $calendarEvents = $systems->map(function ($system) {
@@ -51,6 +52,6 @@ class ViewerController extends Controller
             ];
         });
 
-        return view('viewer.dashboard', compact('statusCounts', 'systems', 'calendarEvents'));
+        return view('viewer.dashboard', compact('statusCounts', 'systems', 'calendarEvents', 'networkCounts'));
     }
 }
