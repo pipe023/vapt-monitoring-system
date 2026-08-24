@@ -8,10 +8,14 @@
                 <p class="text-xs text-gray-400 mt-0.5">Real-time schedule tracking for activities and security assessments.</p>
             </div>
 
-            <!-- ADD ACTIVITY BUTTON -->
-            <button type="button" onclick="openActivityModal()" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-medium text-xs rounded-xl shadow-sm transition">
-                + Add Activity
-            </button>
+            <div class="flex flex-wrap gap-2">
+                <button type="button" onclick="openCompletedActivitiesModal()" class="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-medium text-xs rounded-xl shadow-sm transition">
+                    Completed Activities
+                </button>
+                <button type="button" onclick="openActivityModal()" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-medium text-xs rounded-xl shadow-sm transition">
+                    + Add Activity
+                </button>
+            </div>
         </div>
     </x-slot>
 
@@ -42,6 +46,70 @@
         </div>
     </div>
 
+    <!-- COMPLETED ACTIVITIES MODAL -->
+    <div id="completedActivitiesModal" class="hidden fixed inset-0 bg-gray-900/60 backdrop-blur-md z-[60] flex items-center justify-center transition-opacity duration-300 opacity-0">
+        <div class="bg-white rounded-2xl shadow-2xl border border-gray-100 w-full max-w-4xl mx-4 overflow-hidden transform transition-all duration-300 scale-95" id="completedActivitiesModalContainer">
+            <div class="px-6 py-4 border-b border-gray-100 flex justify-between items-center bg-gray-50">
+                <div>
+                    <h3 class="text-base font-bold text-gray-800">Completed Activities</h3>
+                    <p class="text-xs text-gray-500 mt-0.5">Completed activity records and their uploaded references.</p>
+                </div>
+                <button type="button" onclick="closeCompletedActivitiesModal()" class="text-gray-400 hover:text-gray-600 text-xl font-bold transition">&times;</button>
+            </div>
+            <div class="p-6 max-h-[70vh] overflow-y-auto">
+                @forelse($completedActivities as $completedActivity)
+                    <div class="border border-gray-100 rounded-xl p-4 mb-3 last:mb-0">
+                        <div class="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
+                            <div>
+                                <h4 class="font-semibold text-gray-800">{{ $completedActivity->agenda ?: $completedActivity->type }}</h4>
+                                <p class="text-xs text-gray-500 mt-1">{{ $completedActivity->type }} &middot; Completed {{ $completedActivity->completed_at->format('Y-m-d H:i') }}H</p>
+                            </div>
+                            <span class="inline-flex w-fit items-center px-2.5 py-1 rounded-full bg-emerald-100 text-emerald-800 text-xs font-bold">Completed</span>
+                        </div>
+                        <div class="mt-3 flex flex-wrap gap-3 text-xs">
+                            @if($completedActivity->reference_path)
+                                <a href="{{ route('calendar.activity.reference', $completedActivity->id) }}" target="_blank" rel="noopener" class="text-indigo-600 hover:underline">Reference: {{ $completedActivity->reference_name }}</a>
+                            @endif
+                            @if($completedActivity->completion_reference_path)
+                                <a href="{{ route('calendar.activity.completion-reference', $completedActivity->id) }}" target="_blank" rel="noopener" class="text-emerald-600 hover:underline">Memo for Completion: {{ $completedActivity->completion_reference_name }}</a>
+                            @endif
+                        </div>
+                    </div>
+                @empty
+                    <p class="text-sm text-gray-500 text-center py-8">No completed activities yet.</p>
+                @endforelse
+            </div>
+            <div class="px-6 py-3 bg-gray-50 border-t border-gray-100 flex justify-end">
+                <button type="button" onclick="closeCompletedActivitiesModal()" class="px-4 py-2 bg-gray-200 text-gray-700 font-medium text-xs rounded-xl hover:bg-gray-300 transition">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- COMPLETE ACTIVITY MODAL -->
+    @if(auth()->user()->isAdmin())
+    <div id="completeActivityModal" class="hidden fixed inset-0 bg-gray-900/60 backdrop-blur-md z-[60] flex items-center justify-center transition-opacity duration-300 opacity-0">
+        <div class="bg-white rounded-2xl shadow-2xl border border-gray-100 w-full max-w-md mx-4 overflow-hidden transform transition-all duration-300 scale-95" id="completeActivityModalContainer">
+            <div class="px-6 py-4 border-b border-gray-100 flex justify-between items-center bg-gray-50">
+                <h3 class="text-base font-bold text-gray-800">Complete Activity</h3>
+                <button type="button" onclick="closeCompleteActivityModal()" class="text-gray-400 hover:text-gray-600 text-xl font-bold transition">&times;</button>
+            </div>
+            <form id="completeActivityForm" method="POST" enctype="multipart/form-data" class="p-6 space-y-4">
+                @csrf
+                <p class="text-sm text-gray-600">Upload the completion memo to mark this activity as complete.</p>
+                <div>
+                    <label for="completion_reference_file" class="block text-xs font-semibold text-gray-600 uppercase tracking-wider mb-1">Memo for Completion</label>
+                    <input id="completion_reference_file" type="file" name="completion_reference_file" required accept=".pdf,.doc,.docx,.xls,.xlsx,.jpg,.jpeg,.png" class="block w-full text-sm text-gray-600 file:mr-3 file:rounded-lg file:border-0 file:bg-emerald-50 file:px-3 file:py-2 file:text-xs file:font-semibold file:text-emerald-700 hover:file:bg-emerald-100">
+                    <p class="mt-1 text-[11px] text-gray-400">PDF, Word, Excel, JPG, or PNG up to 10 MB.</p>
+                </div>
+                <div class="pt-4 flex justify-end space-x-2 border-t border-gray-100">
+                    <button type="button" onclick="closeCompleteActivityModal()" class="px-4 py-2 bg-gray-100 text-gray-700 font-medium text-sm rounded-xl hover:bg-gray-200 transition">Cancel</button>
+                    <button type="submit" class="px-4 py-2 bg-emerald-600 text-white font-semibold text-sm rounded-xl hover:bg-emerald-700 shadow-sm transition">Complete Activity</button>
+                </div>
+            </form>
+        </div>
+    </div>
+    @endif
+
     <!-- ====================================================== -->
     <!-- ADD ACTIVITY MODAL (WITH BLUR BACKDROP)                -->
     <!-- ====================================================== -->
@@ -52,7 +120,7 @@
                 <button type="button" onclick="closeActivityModal()" class="text-gray-400 hover:text-gray-600 text-xl font-bold transition">&times;</button>
             </div>
 
-            <form id="activityForm" action="{{ route('calendar.activity.store') }}" method="POST" class="p-6 space-y-4">
+            <form id="activityForm" action="{{ route('calendar.activity.store') }}" method="POST" enctype="multipart/form-data" class="p-6 space-y-4">
                 @csrf
                 <input type="hidden" name="_method" id="activityFormMethod" value="POST">
 
@@ -122,6 +190,13 @@
                     <textarea name="note" rows="2" placeholder="Additional details..." class="w-full text-sm rounded-xl border-gray-200 focus:border-indigo-500 focus:ring-indigo-500"></textarea>
                 </div>
 
+                <div>
+                    <label for="reference_file" class="block text-xs font-semibold text-gray-600 uppercase tracking-wider mb-1">Reference File (Optional)</label>
+                    <input id="reference_file" type="file" name="reference_file" accept=".pdf,.doc,.docx,.xls,.xlsx,.jpg,.jpeg,.png" class="block w-full text-sm text-gray-600 file:mr-3 file:rounded-lg file:border-0 file:bg-indigo-50 file:px-3 file:py-2 file:text-xs file:font-semibold file:text-indigo-700 hover:file:bg-indigo-100">
+                    <p id="currentReferenceFile" class="hidden mt-1 text-xs text-gray-500"></p>
+                    <p class="mt-1 text-[11px] text-gray-400">PDF, Word, Excel, JPG, or PNG up to 10 MB. Upload a new file while editing to replace the current reference.</p>
+                </div>
+
                 <div class="pt-4 flex justify-end space-x-2 border-t border-gray-100">
                     <button type="button" onclick="closeActivityModal()" class="px-4 py-2 bg-gray-100 text-gray-700 font-medium text-sm rounded-xl hover:bg-gray-200 transition">Cancel</button>
                     <button id="activityFormSubmit" type="submit" class="px-4 py-2 bg-indigo-600 text-white font-semibold text-sm rounded-xl hover:bg-indigo-700 shadow-sm transition">Save Activity</button>
@@ -146,9 +221,17 @@
 
             <div class="px-6 py-3 bg-gray-50 border-t border-gray-100 flex justify-end gap-2">
                 <div id="activityActions" class="hidden mr-auto flex gap-2">
+                    @if(auth()->user()->isAdmin())
+                    <button id="completeActivityButton" type="button" onclick="openCompleteActivityModal()" title="Complete activity" aria-label="Complete activity" class="inline-flex items-center justify-center w-9 h-9 text-emerald-600 bg-emerald-50 rounded-lg hover:bg-emerald-100 transition">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 12 2 2 4-4"/><circle cx="12" cy="12" r="9"/></svg>
+                    </button>
+                    @endif
+                    @if(auth()->user()->isAdmin() || auth()->user()->isViewer())
                     <button type="button" onclick="editSelectedActivity()" title="Edit activity" aria-label="Edit activity" class="inline-flex items-center justify-center w-9 h-9 text-indigo-600 bg-indigo-50 rounded-lg hover:bg-indigo-100 transition">
                         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>
                     </button>
+                    @endif
+                    @if(auth()->user()->isAdmin() || auth()->user()->isViewer())
                     <form id="deleteActivityForm" method="POST" onsubmit="return confirm('Are you sure you want to delete this activity?')">
                         @csrf
                         @method('DELETE')
@@ -156,6 +239,7 @@
                             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 6h18"/><path d="M8 6V4h8v2"/><path d="M19 6v14H5V6"/><path d="M10 11v5"/><path d="M14 11v5"/></svg>
                         </button>
                     </form>
+                    @endif
                 </div>
                 <button type="button" onclick="closeDetailsModal()" class="px-4 py-2 bg-gray-200 text-gray-700 font-medium text-xs rounded-xl hover:bg-gray-300 transition">Close</button>
             </div>
@@ -334,7 +418,9 @@
                     `;
                 } else {
                     activityActions.classList.remove('hidden');
-                    deleteActivityForm.action = `/calendar/activity/${props.activity_id}`;
+                    if (deleteActivityForm) {
+                        deleteActivityForm.action = `/calendar/activity/${props.activity_id}`;
+                    }
                     window.selectedActivity = props;
                     let dynamicInfo = '';
                     if (props.type === 'Conference' || props.type === 'TIAC') {
@@ -365,7 +451,15 @@
                             <strong class="text-xs text-gray-400 uppercase block">Note</strong>
                             <p class="text-xs text-gray-600 bg-gray-50 p-2 rounded-lg border border-gray-100 mt-0.5">${props.note}</p>
                         </div>
+                        ${props.reference_url ? `<div><strong class="text-xs text-gray-400 uppercase block">Reference</strong><a href="${props.reference_url}" target="_blank" rel="noopener" class="text-indigo-600 hover:underline">${props.reference_name || 'Download reference file'}</a></div>` : ''}
+                        <div><strong class="text-xs text-gray-400 uppercase block">Status</strong><span class="px-2 py-0.5 rounded-full text-xs font-bold ${props.completed_at ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-800'}">${props.completed_at ? 'Completed' : 'Pending'}</span>${props.completed_at ? `<span class="ml-2 text-xs text-gray-500">${props.completed_at}</span>` : ''}</div>
+                        ${props.completion_reference_url ? `<div><strong class="text-xs text-gray-400 uppercase block">Memo for Completion</strong><a href="${props.completion_reference_url}" target="_blank" rel="noopener" class="text-emerald-600 hover:underline">${props.completion_reference_name || 'Download completion memo'}</a></div>` : ''}
                     `;
+
+                    const completeActivityButton = document.getElementById('completeActivityButton');
+                    if (completeActivityButton) {
+                        completeActivityButton.classList.toggle('hidden', Boolean(props.completed_at));
+                    }
                 }
 
                 openDetailsModal();
@@ -430,12 +524,77 @@
             form.elements.personnel.value = activity.personnel === 'N/A' ? '' : activity.personnel;
             form.elements.location.value = activity.location === 'N/A' ? '' : activity.location;
             form.elements.note.value = activity.note === 'None' ? '' : activity.note;
+            const currentReferenceFile = document.getElementById('currentReferenceFile');
+            currentReferenceFile.textContent = activity.reference_name
+                ? `Current file: ${activity.reference_name}. Upload a new file to replace it.`
+                : '';
+            currentReferenceFile.classList.toggle('hidden', !activity.reference_name);
             handleTypeChange();
         }
 
         function closeActivityModal() {
             const modal = document.getElementById('addActivityModal');
             const container = document.getElementById('addActivityModalContainer');
+            modal.classList.remove('opacity-100');
+            modal.classList.add('opacity-0');
+            container.classList.remove('scale-100');
+            container.classList.add('scale-95');
+            setTimeout(() => modal.classList.add('hidden'), 300);
+        }
+
+        function openCompletedActivitiesModal() {
+            const modal = document.getElementById('completedActivitiesModal');
+            const container = document.getElementById('completedActivitiesModalContainer');
+
+            modal.classList.remove('hidden');
+            setTimeout(() => {
+                modal.classList.remove('opacity-0');
+                modal.classList.add('opacity-100');
+                container.classList.remove('scale-95');
+                container.classList.add('scale-100');
+            }, 10);
+        }
+
+        function closeCompletedActivitiesModal() {
+            const modal = document.getElementById('completedActivitiesModal');
+            const container = document.getElementById('completedActivitiesModalContainer');
+
+            modal.classList.remove('opacity-100');
+            modal.classList.add('opacity-0');
+            container.classList.remove('scale-100');
+            container.classList.add('scale-95');
+            setTimeout(() => modal.classList.add('hidden'), 300);
+        }
+
+        function openCompleteActivityModal() {
+            const activity = window.selectedActivity;
+            const form = document.getElementById('completeActivityForm');
+            const modal = document.getElementById('completeActivityModal');
+            const container = document.getElementById('completeActivityModalContainer');
+
+            if (!activity || !form || !modal || !container) {
+                return;
+            }
+
+            form.action = `/calendar/activity/${activity.activity_id}/complete`;
+            form.reset();
+            modal.classList.remove('hidden');
+            setTimeout(() => {
+                modal.classList.remove('opacity-0');
+                modal.classList.add('opacity-100');
+                container.classList.remove('scale-95');
+                container.classList.add('scale-100');
+            }, 10);
+        }
+
+        function closeCompleteActivityModal() {
+            const modal = document.getElementById('completeActivityModal');
+            const container = document.getElementById('completeActivityModalContainer');
+
+            if (!modal || !container) {
+                return;
+            }
+
             modal.classList.remove('opacity-100');
             modal.classList.add('opacity-0');
             container.classList.remove('scale-100');

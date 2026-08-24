@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\VaptSystem;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Response;
 use App\Models\CalendarActivity;
 use Carbon\Carbon;
@@ -264,14 +265,20 @@ class VaptSystemController extends Controller
                     'personnel'         => $act->personnel ?? 'N/A',
                     'location'          => $act->location ?? 'N/A',
                     'note'              => $act->note ?? 'None',
+                    'reference_url'     => $act->reference_path ? route('calendar.activity.reference', $act->id) : null,
+                    'reference_name'    => $act->reference_name,
+                    'completed_at'     => $act->completed_at?->format('Y-m-d Hi') . ($act->completed_at ? 'H' : ''),
+                    'completion_reference_url' => $act->completion_reference_path ? route('calendar.activity.completion-reference', $act->id) : null,
+                    'completion_reference_name' => $act->completion_reference_name,
                 ]
             ];
         });
 
         // Calendar displays created activities only.
         $calendarEvents = $activityEvents->values()->toArray();
+        $completedActivities = $activities->whereNotNull('completed_at')->sortByDesc('completed_at');
 
-        return view('calendar', compact('calendarEvents'));
+        return view('calendar', compact('calendarEvents', 'completedActivities'));
     }
 
     /**
@@ -283,7 +290,10 @@ class VaptSystemController extends Controller
             'type'       => 'required|in:Conference,Dispatch,Mission,TIAC',
             'start_time' => 'required|date',
             'end_time'   => 'nullable|date|after_or_equal:start_time',
+            'reference_file' => 'nullable|file|mimes:pdf,doc,docx,xls,xlsx,jpg,jpeg,png|max:10240',
         ]);
+
+        $referencePath = $request->file('reference_file')?->store('calendar-references', 'local');
 
         CalendarActivity::create([
             'type'              => $request->type,
@@ -296,6 +306,8 @@ class VaptSystemController extends Controller
             'personnel'         => $request->personnel,
             'location'          => $request->location,
             'note'              => $request->note,
+            'reference_path'    => $referencePath,
+            'reference_name'    => $request->file('reference_file')?->getClientOriginalName(),
             'user_id'           => auth()->id(),
         ]);
 
@@ -307,11 +319,6 @@ class VaptSystemController extends Controller
      */
     public function updateActivity(Request $request, $id)
     {
-        // Prevent Viewers from editing
-        if (auth()->user()->isViewer()) {
-            abort(403, 'Unauthorized action.');
-        }
-
         $activity = CalendarActivity::findOrFail($id);
 
         $request->validate([
@@ -319,6 +326,7 @@ class VaptSystemController extends Controller
             'start_time' => 'required|date',
             'end_time'   => 'nullable|date|after_or_equal:start_time',
             'agenda'     => 'nullable|string',
+            'reference_file' => 'nullable|file|mimes:pdf,doc,docx,xls,xlsx,jpg,jpeg,png|max:10240',
         ]);
 
         $activity->update([
@@ -334,6 +342,17 @@ class VaptSystemController extends Controller
             'note'              => $request->note,
         ]);
 
+        if ($request->hasFile('reference_file')) {
+            if ($activity->reference_path) {
+                Storage::disk('local')->delete($activity->reference_path);
+            }
+
+            $activity->update([
+                'reference_path' => $request->file('reference_file')->store('calendar-references', 'local'),
+                'reference_name' => $request->file('reference_file')->getClientOriginalName(),
+            ]);
+        }
+
         return redirect()->route('calendar')->with('success', 'Activity updated successfully.');
     }
 
@@ -342,14 +361,74 @@ class VaptSystemController extends Controller
      */
     public function destroyActivity($id)
     {
-        // Only admins and superadmins can delete
+        // Viewers may delete calendar activities, but cannot edit them.
+        if (!auth()->user()->isAdmin() && !auth()->user()->isViewer()) {
+            abort(403, 'Unauthorized action.');
+        }
+
+        $activity = CalendarActivity::findOrFail($id);
+        if ($activity->reference_path) {
+            Storage::disk('local')->delete($activity->reference_path);
+        }
+        if ($activity->completion_reference_path) {
+            Storage::disk('local')->delete($activity->completion_reference_path);
+        }
+        $activity->delete();
+
+        return redirect()->route('calendar')->with('success', 'Activity deleted successfully.');
+    }
+
+    /**
+     * Download an activity reference file.
+     */
+    public function downloadActivityReference($id)
+    {
+        $activity = CalendarActivity::findOrFail($id);
+
+        abort_unless($activity->reference_path && Storage::disk('local')->exists($activity->reference_path), 404);
+
+        return Storage::disk('local')->download($activity->reference_path, $activity->reference_name);
+    }
+
+    /**
+     * Mark an activity complete with its required completion memo.
+     */
+    public function completeActivity(Request $request, $id)
+    {
         if (!auth()->user()->isAdmin()) {
             abort(403, 'Unauthorized action.');
         }
 
         $activity = CalendarActivity::findOrFail($id);
-        $activity->delete();
 
-        return redirect()->route('calendar')->with('success', 'Activity deleted successfully.');
+        if ($activity->completed_at) {
+            return redirect()->route('calendar')->with('error', 'This activity is already completed.');
+        }
+
+        $request->validate([
+            'completion_reference_file' => 'required|file|mimes:pdf,doc,docx,xls,xlsx,jpg,jpeg,png|max:10240',
+        ]);
+
+        $file = $request->file('completion_reference_file');
+        $activity->update([
+            'completed_at' => now(),
+            'completed_by' => auth()->id(),
+            'completion_reference_path' => $file->store('calendar-completion-references', 'local'),
+            'completion_reference_name' => $file->getClientOriginalName(),
+        ]);
+
+        return redirect()->route('calendar')->with('success', 'Activity completed successfully.');
+    }
+
+    /**
+     * Download a completion memo.
+     */
+    public function downloadCompletionReference($id)
+    {
+        $activity = CalendarActivity::findOrFail($id);
+
+        abort_unless($activity->completion_reference_path && Storage::disk('local')->exists($activity->completion_reference_path), 404);
+
+        return Storage::disk('local')->download($activity->completion_reference_path, $activity->completion_reference_name);
     }
 }

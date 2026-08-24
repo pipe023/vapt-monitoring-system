@@ -41,8 +41,6 @@ Route::middleware(['auth'])->group(function () {
         Route::post('/vapt', [VaptSystemController::class, 'store'])->name('vapt.store');
         Route::put('/vapt/{vapt}', [VaptSystemController::class, 'update'])->name('vapt.update');
         Route::delete('/vapt/{vapt}', [VaptSystemController::class, 'destroy'])->name('vapt.destroy');
-        Route::get('/calendar', [VaptSystemController::class, 'calendar'])->name('calendar');
-        Route::post('/calendar/activity', [VaptSystemController::class, 'storeActivity'])->name('calendar.activity.store');
     });
 
     // User Management & Role Assignment (SUPERADMIN ONLY)
@@ -58,6 +56,9 @@ Route::middleware(['auth'])->group(function () {
     Route::post('/calendar/activity', [VaptSystemController::class, 'storeActivity'])->name('calendar.activity.store');
     Route::put('/calendar/activity/{id}', [VaptSystemController::class, 'updateActivity'])->name('calendar.activity.update');
     Route::delete('/calendar/activity/{id}', [VaptSystemController::class, 'destroyActivity'])->name('calendar.activity.destroy');
+    Route::get('/calendar/activity/{id}/reference', [VaptSystemController::class, 'downloadActivityReference'])->name('calendar.activity.reference');
+    Route::post('/calendar/activity/{id}/complete', [VaptSystemController::class, 'completeActivity'])->name('calendar.activity.complete');
+    Route::get('/calendar/activity/{id}/completion-reference', [VaptSystemController::class, 'downloadCompletionReference'])->name('calendar.activity.completion-reference');
 });
 
 

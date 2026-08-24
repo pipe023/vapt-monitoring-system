@@ -43,6 +43,9 @@
 
     <div class="flex min-h-20 items-center border-b border-slate-200 bg-white px-4 lg:hidden">
         <button type="button" @click="open = true" class="flex h-10 w-10 items-center justify-center rounded-xl text-slate-600 hover:bg-slate-100" title="Open menu" aria-label="Open menu"><span class="text-xl">☰</span></button>
-        <span class="ml-3 text-sm font-bold tracking-wide text-slate-800">ISG MONITORING</span>
+        <a href="{{ route('portal') }}" class="ml-3 flex items-center gap-2">
+            <span class="flex h-8 w-8 items-center justify-center rounded-lg bg-slate-950"><img src="{{ asset('images/isg_logo.png') }}" alt="ISG Logo" class="h-6 w-auto"></span>
+            <span class="text-sm font-bold tracking-wide text-slate-800">ISG MONITORING</span>
+        </a>
     </div>
 </nav>

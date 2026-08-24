@@ -17,6 +17,16 @@ class CalendarActivity extends Model
         'personnel',
         'location',
         'note',
+        'reference_path',
+        'reference_name',
+        'completed_at',
+        'completed_by',
+        'completion_reference_path',
+        'completion_reference_name',
         'user_id'
+    ];
+
+    protected $casts = [
+        'completed_at' => 'datetime',
     ];
 }
