@@ -24,7 +24,7 @@
                 <span class="cyber-loader-label text-[10px] font-bold uppercase">Loading module</span>
             </div>
         </div>
-        <div class="min-h-screen bg-gray-100 lg:pl-72">
+        <div x-data="{ sidebarCollapsed: localStorage.getItem('sidebarCollapsed') === 'true' }" x-bind:class="sidebarCollapsed ? 'lg:pl-20' : 'lg:pl-72'" class="min-h-screen bg-gray-100 transition-[padding] duration-300">
             @include('layouts.navigation')
 
             <!-- Page Heading -->
