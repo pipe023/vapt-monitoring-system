@@ -152,18 +152,36 @@ class VaptSystemController extends Controller
 
         $callback = function() use ($systems) {
             $file = fopen('php://output', 'w');
-            fputcsv($file, ['System Name', 'URL', 'Personnel In Charge', 'Status', 'Remarks', 'Last Updated']);
+            fputcsv($file, ['Network', 'System Name', 'URL', 'Personnel In Charge', 'Status', 'Remarks', 'Last Updated']);
 
-            foreach ($systems as $system) {
-                fputcsv($file, [
-                    $system->name,
-                    $system->url,
-                    $system->personnel_in_charge,
-                    $system->status,
-                    $system->remarks,
-                    $system->updated_at->format('Y-m-d H:i:s')
-                ]);
+            $networkGroups = $systems->groupBy(fn ($system) => $system->network ?: 'UNASSIGNED');
+            $networkOrder = ['RED NETWORK', 'GRAY NETWORK', 'UNASSIGNED'];
+            $hasWrittenGroup = false;
+
+            foreach ($networkOrder as $network) {
+                if (! $networkGroups->has($network)) {
+                    continue;
+                }
+
+                if ($hasWrittenGroup) {
+                    fputcsv($file, []);
+                }
+
+                foreach ($networkGroups->get($network) as $system) {
+                    fputcsv($file, [
+                        $network,
+                        $system->name,
+                        $system->url,
+                        $system->personnel_in_charge,
+                        $system->status,
+                        $system->remarks,
+                        $system->updated_at->format('Y-m-d H:i:s')
+                    ]);
+                }
+
+                $hasWrittenGroup = true;
             }
+
             fclose($file);
         };
 

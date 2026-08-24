@@ -12,10 +12,12 @@ class PreventBackHistory
     {
         $response = $next($request);
 
-        return $response->withHeaders([
+        $response->headers->add([
             'Cache-Control' => 'no-store, no-cache, must-revalidate, max-age=0',
             'Pragma' => 'no-cache',
             'Expires' => '0',
         ]);
+
+        return $response;
     }
 }

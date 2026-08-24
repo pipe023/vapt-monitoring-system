@@ -8,7 +8,7 @@
                 <p class="text-xs text-gray-400 mt-0.5">Real-time tracking for monitored systems and assessment records.</p>
             </div>
             <div class="flex space-x-2">
-                <a href="{{ route('vapt.export') }}" class="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 font-medium text-sm rounded-xl transition">
+                <a href="{{ route('vapt.export') }}" download class="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 font-medium text-sm rounded-xl transition">
                     Export CSV
                 </a>
 
@@ -285,7 +285,7 @@
 
             document.getElementById('edit_name').value = system.name || '';
             document.getElementById('edit_network').value = system.network || '';
-            document.getElementById('edit_url').value = system.url || '';
+             document.getElementById('edit_url').value = system.url || '';
             document.getElementById('edit_personnel').value = system.personnel_in_charge || '';
             document.getElementById('edit_status').value = system.status || '';
             document.getElementById('edit_remarks').value = system.remarks || '';
