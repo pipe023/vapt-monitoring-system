@@ -4,6 +4,7 @@ use App\Http\Controllers\Auth\RegisteredUserController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\VaptSystemController;
 use App\Http\Controllers\ViewerController;
+use App\Http\Controllers\DocumentController;
 use App\Http\Middleware\CheckRole;
 use Illuminate\Support\Facades\Route;
 use App\Http\Middleware\CheckActivityUserRole;
@@ -25,6 +26,16 @@ Route::middleware(['auth'])->group(function () {
 
     // Dedicated Viewer Module Route
     Route::get('/viewer/dashboard', [ViewerController::class, 'index'])->name('viewer.dashboard');
+
+    // Document Tracking Module
+    Route::get('/documents', [DocumentController::class, 'index'])->name('documents.index');
+    Route::get('/documents/{document}/view', [DocumentController::class, 'view'])->name('documents.view');
+    Route::get('/documents/{document}/download', [DocumentController::class, 'download'])->name('documents.download');
+    Route::middleware([CheckRole::class . ':admin'])->group(function () {
+        Route::post('/documents', [DocumentController::class, 'store'])->name('documents.store');
+        Route::put('/documents/{document}', [DocumentController::class, 'update'])->name('documents.update');
+        Route::delete('/documents/{document}', [DocumentController::class, 'destroy'])->name('documents.destroy');
+    });
 
     // Profile Routes
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');

@@ -231,6 +231,8 @@ class VaptSystemController extends Controller
                 'Dispatch'   => '#06B6D4',
                 'Mission'    => '#EC4899',
                 'TIAC'       => '#F59E0B',
+                'Inspection' => '#10B981',
+                'Training'   => '#3B82F6',
                 default      => '#6B7280'
             };
 
@@ -287,7 +289,7 @@ class VaptSystemController extends Controller
     public function storeActivity(Request $request)
     {
         $request->validate([
-            'type'       => 'required|in:Conference,Dispatch,Mission,TIAC',
+            'type'       => 'required|in:Conference,Dispatch,Mission,TIAC,Inspection,Training',
             'start_time' => 'required|date',
             'end_time'   => 'nullable|date|after_or_equal:start_time',
             'reference_file' => 'nullable|file|mimes:pdf,doc,docx,xls,xlsx,jpg,jpeg,png|max:10240',
@@ -295,16 +297,18 @@ class VaptSystemController extends Controller
 
         $referencePath = $request->file('reference_file')?->store('calendar-references', 'local');
 
+        $usesReducedFields = in_array($request->type, ['Inspection', 'Training'], true);
+
         CalendarActivity::create([
             'type'              => $request->type,
             'agenda'            => $request->agenda,
             'start_time'        => Carbon::parse($request->start_time),
             'end_time'          => $request->end_time ? Carbon::parse($request->end_time) : null,
-            'presiding_officer' => $request->presiding_officer,
+            'presiding_officer' => $usesReducedFields ? null : $request->presiding_officer,
             'attendees'         => $request->attendees,
             'venue'             => $request->venue,
-            'personnel'         => $request->personnel,
-            'location'          => $request->location,
+            'personnel'         => $usesReducedFields ? null : $request->personnel,
+            'location'          => $usesReducedFields ? null : $request->location,
             'note'              => $request->note,
             'reference_path'    => $referencePath,
             'reference_name'    => $request->file('reference_file')?->getClientOriginalName(),
@@ -322,23 +326,25 @@ class VaptSystemController extends Controller
         $activity = CalendarActivity::findOrFail($id);
 
         $request->validate([
-            'type'       => 'required|string',
+            'type'       => 'required|in:Conference,Dispatch,Mission,TIAC,Inspection,Training',
             'start_time' => 'required|date',
             'end_time'   => 'nullable|date|after_or_equal:start_time',
             'agenda'     => 'nullable|string',
             'reference_file' => 'nullable|file|mimes:pdf,doc,docx,xls,xlsx,jpg,jpeg,png|max:10240',
         ]);
 
+        $usesReducedFields = in_array($request->type, ['Inspection', 'Training'], true);
+
         $activity->update([
             'type'              => $request->type,
             'agenda'            => $request->agenda,
             'start_time'        => Carbon::parse($request->start_time),
             'end_time'          => $request->end_time ? Carbon::parse($request->end_time) : null,
-            'presiding_officer' => $request->presiding_officer,
+            'presiding_officer' => $usesReducedFields ? null : $request->presiding_officer,
             'attendees'         => $request->attendees,
             'venue'             => $request->venue,
-            'personnel'         => $request->personnel,
-            'location'          => $request->location,
+            'personnel'         => $usesReducedFields ? null : $request->personnel,
+            'location'          => $usesReducedFields ? null : $request->location,
             'note'              => $request->note,
         ]);
 

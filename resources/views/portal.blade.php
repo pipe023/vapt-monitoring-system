@@ -91,6 +91,16 @@
                             <span class="mt-6 inline-flex rounded-full bg-amber-400/10 px-3 py-1 text-[10px] font-bold uppercase tracking-wider text-amber-300">Schedule monitoring</span>
                         </a>
 
+                        <a href="{{ route('documents.index') }}" class="group relative overflow-hidden rounded-3xl border border-white/10 bg-white/[0.07] p-7 transition duration-300 hover:-translate-y-1 hover:border-emerald-300/50 hover:bg-white/[0.11]">
+                            <div class="flex items-start justify-between">
+                                <span class="flex h-12 w-12 items-center justify-center rounded-2xl bg-emerald-400/15 text-emerald-300"><svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6M8 13h8M8 17h5"/></svg></span>
+                                <svg class="text-slate-500 transition group-hover:translate-x-1 group-hover:text-emerald-300" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
+                            </div>
+                            <h2 class="mt-8 text-xl font-bold text-white">Document Tracking</h2>
+                            <p class="mt-2 text-sm leading-6 text-slate-400">Track operational documents, review status, owners, deadlines, and secure attachments.</p>
+                            <span class="mt-6 inline-flex rounded-full bg-emerald-400/10 px-3 py-1 text-[10px] font-bold uppercase tracking-wider text-emerald-300">Records management</span>
+                        </a>
+
                         <a href="{{ config('services.isg_status.url') }}" target="_blank" rel="noopener noreferrer" class="group relative overflow-hidden rounded-3xl border border-white/10 bg-white/[0.07] p-7 transition duration-300 hover:-translate-y-1 hover:border-emerald-300/50 hover:bg-white/[0.11]">
                             <div class="flex items-start justify-between">
                                 <span class="flex h-12 w-12 items-center justify-center rounded-2xl bg-emerald-400/15 text-emerald-300">

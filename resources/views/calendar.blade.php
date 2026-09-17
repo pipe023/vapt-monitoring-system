@@ -36,6 +36,8 @@
                 <span class="inline-flex items-center px-2.5 py-1 rounded-full bg-cyan-100 text-cyan-800"><span class="w-2 h-2 mr-1.5 bg-cyan-500 rounded-full"></span> Dispatch</span>
                 <span class="inline-flex items-center px-2.5 py-1 rounded-full bg-pink-100 text-pink-800"><span class="w-2 h-2 mr-1.5 bg-pink-500 rounded-full"></span> Mission</span>
                 <span class="inline-flex items-center px-2.5 py-1 rounded-full bg-amber-100 text-amber-800"><span class="w-2 h-2 mr-1.5 bg-amber-500 rounded-full"></span> TIAC</span>
+                <span class="inline-flex items-center px-2.5 py-1 rounded-full bg-emerald-100 text-emerald-800"><span class="w-2 h-2 mr-1.5 bg-emerald-500 rounded-full"></span> Inspection</span>
+                <span class="inline-flex items-center px-2.5 py-1 rounded-full bg-blue-100 text-blue-800"><span class="w-2 h-2 mr-1.5 bg-blue-500 rounded-full"></span> Training</span>
             </div>
 
             <!-- MAIN CALENDAR CONTAINER -->
@@ -132,6 +134,8 @@
                         <option value="Dispatch">Dispatch</option>
                         <option value="Mission">Mission</option>
                         <option value="TIAC">TIAC</option>
+                        <option value="Inspection">Inspection</option>
+                        <option value="Training">Training</option>
                     </select>
                 </div>
 
@@ -153,9 +157,9 @@
                     <input type="text" name="agenda" placeholder="e.g. Annual Planning Session" class="w-full text-sm rounded-xl border-gray-200 focus:border-indigo-500 focus:ring-indigo-500">
                 </div>
 
-                <!-- DYNAMIC FIELDS FOR CONFERENCE / TIAC -->
+                <!-- DYNAMIC FIELDS FOR CONFERENCE / TIAC / INSPECTION / TRAINING -->
                 <div id="fields_conference_tiac" class="space-y-4">
-                    <div>
+                    <div id="presidingOfficerField">
                         <label class="block text-xs font-semibold text-gray-600 uppercase tracking-wider mb-1">Presiding Officer</label>
                         <input type="text" name="presiding_officer" placeholder="e.g. John Doe" class="w-full text-sm rounded-xl border-gray-200 focus:border-indigo-500 focus:ring-indigo-500">
                     </div>
@@ -423,10 +427,10 @@
                     }
                     window.selectedActivity = props;
                     let dynamicInfo = '';
-                    if (props.type === 'Conference' || props.type === 'TIAC') {
+                    if (props.type === 'Conference' || props.type === 'TIAC' || props.type === 'Inspection' || props.type === 'Training') {
                         dynamicInfo = `
                             <div><strong class="text-xs text-gray-400 uppercase block">Agenda</strong> ${props.agenda}</div>
-                            <div><strong class="text-xs text-gray-400 uppercase block">Presiding Officer</strong> ${props.presiding_officer}</div>
+                            ${props.type !== 'Inspection' && props.type !== 'Training' ? `<div><strong class="text-xs text-gray-400 uppercase block">Presiding Officer</strong> ${props.presiding_officer}</div>` : ''}
                             <div><strong class="text-xs text-gray-400 uppercase block">Attendees</strong> ${props.attendees}</div>
                             <div><strong class="text-xs text-gray-400 uppercase block">Venue</strong> ${props.venue}</div>
                         `;
@@ -474,14 +478,18 @@
             const type = document.getElementById('activity_type').value;
             const confTiacGroup = document.getElementById('fields_conference_tiac');
             const dispatchMissionGroup = document.getElementById('fields_dispatch_mission');
+            const presidingOfficerField = document.getElementById('presidingOfficerField');
 
-            if (type === 'Conference' || type === 'TIAC') {
+            if (type === 'Conference' || type === 'TIAC' || type === 'Inspection' || type === 'Training') {
                 confTiacGroup.classList.remove('hidden');
                 dispatchMissionGroup.classList.add('hidden');
             } else {
                 confTiacGroup.classList.add('hidden');
                 dispatchMissionGroup.classList.remove('hidden');
             }
+
+            const usesReducedFields = type === 'Inspection' || type === 'Training';
+            presidingOfficerField.classList.toggle('hidden', usesReducedFields);
         }
 
         // ADD ACTIVITY MODAL TOGGLES
