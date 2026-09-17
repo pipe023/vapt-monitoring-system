@@ -36,7 +36,13 @@
 
         <div class="border-t border-white/10 p-4">
             <a href="{{ route('profile.edit') }}" title="Profile" class="mb-3 flex items-center gap-3 rounded-xl px-3 py-3 transition hover:bg-white/10">
-                <span class="flex h-9 w-9 items-center justify-center rounded-full bg-cyan-400/15 text-cyan-300">◉</span>
+                <span class="flex h-9 w-9 items-center justify-center overflow-hidden rounded-full bg-cyan-400/15 text-cyan-300">
+                    @if (Auth::user()->profile_photo)
+                        <img src="{{ asset('storage/' . Auth::user()->profile_photo) }}" alt="{{ Auth::user()->username }} profile photo" class="h-full w-full object-cover">
+                    @else
+                        <span class="text-xs font-bold">{{ strtoupper(substr(Auth::user()->username, 0, 1)) }}</span>
+                    @endif
+                </span>
                 <span x-show="!sidebarCollapsed" x-transition.opacity class="sidebar-label min-w-0"><span class="block truncate text-sm font-semibold">{{ Auth::user()->username }}</span><span class="block text-[10px] uppercase tracking-wider text-slate-500">{{ Auth::user()->role }}</span></span>
             </a>
             <form method="POST" action="{{ route('logout') }}">

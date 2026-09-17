@@ -4,6 +4,8 @@ namespace Tests\Feature;
 
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Storage;
 use Tests\TestCase;
 
 class ProfileTest extends TestCase
@@ -21,15 +23,20 @@ class ProfileTest extends TestCase
         $response->assertOk();
     }
 
-    public function test_profile_information_can_be_updated(): void
+    public function test_profile_information_and_photo_can_be_updated(): void
     {
-        $user = User::factory()->create();
+        Storage::fake('public');
+
+        $user = User::factory()->create([
+            'username' => '960123',
+            'role' => 'admin',
+        ]);
 
         $response = $this
             ->actingAs($user)
             ->patch('/profile', [
-                'name' => 'Test User',
-                'email' => 'test@example.com',
+                'username' => '960124',
+                'profile_photo' => UploadedFile::fake()->create('avatar.jpg', 1024, 'image/jpeg'),
             ]);
 
         $response
@@ -38,32 +45,36 @@ class ProfileTest extends TestCase
 
         $user->refresh();
 
-        $this->assertSame('Test User', $user->name);
-        $this->assertSame('test@example.com', $user->email);
-        $this->assertNull($user->email_verified_at);
+        $this->assertSame('960124', $user->username);
+        $this->assertNotNull($user->profile_photo);
+        Storage::disk('public')->assertExists($user->profile_photo);
     }
 
-    public function test_email_verification_status_is_unchanged_when_the_email_address_is_unchanged(): void
+    public function test_admin_cannot_delete_their_account_from_profile(): void
     {
-        $user = User::factory()->create();
+        $user = User::factory()->create([
+            'role' => 'admin',
+        ]);
 
         $response = $this
             ->actingAs($user)
-            ->patch('/profile', [
-                'name' => 'Test User',
-                'email' => $user->email,
+            ->from('/profile')
+            ->delete('/profile', [
+                'password' => 'password',
             ]);
 
         $response
-            ->assertSessionHasNoErrors()
+            ->assertSessionHas('error', 'Only Superadmin accounts can delete profiles.')
             ->assertRedirect('/profile');
 
-        $this->assertNotNull($user->refresh()->email_verified_at);
+        $this->assertNotNull($user->fresh());
     }
 
-    public function test_user_can_delete_their_account(): void
+    public function test_superadmin_can_delete_their_account_from_profile(): void
     {
-        $user = User::factory()->create();
+        $user = User::factory()->create([
+            'role' => 'superadmin',
+        ]);
 
         $response = $this
             ->actingAs($user)
@@ -81,10 +92,12 @@ class ProfileTest extends TestCase
 
     public function test_correct_password_must_be_provided_to_delete_account(): void
     {
-        $user = User::factory()->create();
+        $superadmin = User::factory()->create([
+            'role' => 'superadmin',
+        ]);
 
         $response = $this
-            ->actingAs($user)
+            ->actingAs($superadmin)
             ->from('/profile')
             ->delete('/profile', [
                 'password' => 'wrong-password',
@@ -94,6 +107,6 @@ class ProfileTest extends TestCase
             ->assertSessionHasErrorsIn('userDeletion', 'password')
             ->assertRedirect('/profile');
 
-        $this->assertNotNull($user->fresh());
+        $this->assertNotNull($superadmin->fresh());
     }
 }
