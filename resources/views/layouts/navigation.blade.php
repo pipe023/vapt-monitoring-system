@@ -38,7 +38,7 @@
             <a href="{{ route('profile.edit') }}" title="Profile" class="mb-3 flex items-center gap-3 rounded-xl px-3 py-3 transition hover:bg-white/10">
                 <span class="flex h-9 w-9 items-center justify-center overflow-hidden rounded-full bg-cyan-400/15 text-cyan-300">
                     @if (Auth::user()->profile_photo)
-                        <img src="{{ asset('storage/' . Auth::user()->profile_photo) }}" alt="{{ Auth::user()->username }} profile photo" class="h-full w-full object-cover">
+                        <img src="{{ Storage::url(Auth::user()->profile_photo) }}" alt="{{ Auth::user()->username }} profile photo" class="h-full w-full object-cover">
                     @else
                         <span class="text-xs font-bold">{{ strtoupper(substr(Auth::user()->username, 0, 1)) }}</span>
                     @endif

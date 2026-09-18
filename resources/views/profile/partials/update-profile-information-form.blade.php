@@ -16,7 +16,7 @@
         <div class="flex items-center gap-4">
             <div class="flex h-20 w-20 items-center justify-center overflow-hidden rounded-full border border-slate-200 bg-slate-100 text-lg font-semibold text-slate-600">
                 @if ($user->profile_photo)
-                    <img src="{{ asset('storage/' . $user->profile_photo) }}" alt="{{ $user->username }} profile photo" class="h-full w-full object-cover">
+                    <img src="{{ Storage::url($user->profile_photo) }}" alt="{{ $user->username }} profile photo" class="h-full w-full object-cover">
                 @else
                     {{ strtoupper(substr($user->username, 0, 1)) }}
                 @endif

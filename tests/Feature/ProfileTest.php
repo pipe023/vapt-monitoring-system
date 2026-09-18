@@ -50,6 +50,27 @@ class ProfileTest extends TestCase
         Storage::disk('public')->assertExists($user->profile_photo);
     }
 
+    public function test_public_storage_link_is_created_when_missing(): void
+    {
+        $tempDir = sys_get_temp_dir() . '/vapt-profile-link-' . uniqid();
+        $linkPath = $tempDir . '/storage';
+        $targetPath = storage_path('app/public');
+
+        mkdir($tempDir, 0777, true);
+
+        if (file_exists($linkPath)) {
+            @unlink($linkPath);
+        }
+
+        $provider = new \App\Providers\AppServiceProvider($this->app);
+
+        $this->assertTrue($provider->ensurePublicStorageLink($linkPath, $targetPath));
+        $this->assertTrue(is_link($linkPath) || file_exists($linkPath));
+
+        @unlink($linkPath);
+        @rmdir($tempDir);
+    }
+
     public function test_admin_cannot_delete_their_account_from_profile(): void
     {
         $user = User::factory()->create([
