@@ -22,10 +22,13 @@
             @endif
 
             <!-- 1. REGISTER NEW USER FORM -->
-            <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
-                <h3 class="text-base font-bold text-gray-800 mb-4 pb-2 border-b border-gray-100">
-                    Register New Account
-                </h3>
+            <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 space-y-6">
+                <div class="pb-2 border-b border-gray-100">
+                    <h3 class="text-base font-bold text-gray-800">
+                        Register New System Account
+                    </h3>
+                    <p class="mt-1 text-xs text-gray-500">Keep the standard system roles available for the main monitoring access.</p>
+                </div>
 
                 <form method="POST" action="{{ route('register') }}" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 items-end">
                     @csrf
@@ -39,9 +42,9 @@
                     <div>
                         <label class="block text-xs font-semibold text-gray-600 uppercase tracking-wider mb-1">Role</label>
                         <select name="role" required class="w-full text-sm rounded-xl border-gray-200 focus:border-indigo-500 focus:ring-indigo-500">
-                            <option value="viewer">Viewer (Read-Only)</option>
-                            <option value="admin">Admin (System Manager)</option>
-                            <option value="superadmin">Superadmin (Full Access)</option>
+                            <option value="superadmin">Superadmin</option>
+                            <option value="admin">Admin</option>
+                            <option value="viewer">Viewer</option>
                         </select>
                         <x-input-error :messages="$errors->get('role')" class="mt-1" />
                     </div>
@@ -62,6 +65,49 @@
                         </div>
                     </div>
                 </form>
+
+                <div class="pt-4 border-t border-gray-100">
+                    <h3 class="text-base font-bold text-gray-800">
+                        Register New Document Tracking Account
+                    </h3>
+                    <p class="mt-1 text-xs text-gray-500">This is separate from the normal system accounts and is intended for the document module RBAC.</p>
+
+                    <form method="POST" action="{{ route('register') }}" class="mt-4 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 items-end">
+                        @csrf
+
+                        <div>
+                            <label class="block text-xs font-semibold text-gray-600 uppercase tracking-wider mb-1">Username</label>
+                            <input type="text" name="username" value="{{ old('username') }}" required placeholder="Enter document tracking username" class="w-full text-sm rounded-xl border-gray-200 focus:border-emerald-500 focus:ring-emerald-500">
+                        </div>
+
+                        <div>
+                            <label class="block text-xs font-semibold text-gray-600 uppercase tracking-wider mb-1">Document Role</label>
+                            <select name="role" required class="w-full text-sm rounded-xl border-gray-200 focus:border-emerald-500 focus:ring-emerald-500">
+                                <option value="POIC, SMSB">POIC, SMSB</option>
+                                <option value="POIC, ASDB">POIC, ASDB</option>
+                                <option value="POIC, ADMIN">POIC, ADMIN</option>
+                                <option value="POIC, REB">POIC, REB</option>
+                                <option value="OPNS">OPNS</option>
+                                <option value="DUTY SERVER">DUTY SERVER</option>
+                            </select>
+                        </div>
+
+                        <div>
+                            <label class="block text-xs font-semibold text-gray-600 uppercase tracking-wider mb-1">Password</label>
+                            <input type="password" name="password" required placeholder="••••••••" class="w-full text-sm rounded-xl border-gray-200 focus:border-emerald-500 focus:ring-emerald-500">
+                        </div>
+
+                        <div>
+                            <label class="block text-xs font-semibold text-gray-600 uppercase tracking-wider mb-1">Confirm Password</label>
+                            <div class="flex space-x-2">
+                                <input type="password" name="password_confirmation" required placeholder="••••••••" class="w-full text-sm rounded-xl border-gray-200 focus:border-emerald-500 focus:ring-emerald-500">
+                                <button type="submit" class="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-xs uppercase tracking-wider rounded-xl shadow-sm transition whitespace-nowrap">
+                                    Create
+                                </button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
             </div>
 
             <!-- 2. USER DIRECTORY WITH RESET PASSWORD ACTIONS -->
@@ -92,10 +138,12 @@
                                     <td class="px-6 py-4">
                                         @php
                                             $roleBadge = match($user->role) {
-                                                'superadmin' => 'bg-purple-100 text-purple-800',
-                                                'admin'      => 'bg-blue-100 text-blue-800',
-                                                'viewer'     => 'bg-gray-100 text-gray-800',
-                                                default      => 'bg-gray-100 text-gray-800'
+                                                'superadmin'   => 'bg-purple-100 text-purple-800',
+                                                'admin'        => 'bg-blue-100 text-blue-800',
+                                                'viewer'       => 'bg-gray-100 text-gray-800',
+                                                'OPNS'         => 'bg-cyan-100 text-cyan-800',
+                                                'DUTY SERVER'  => 'bg-amber-100 text-amber-800',
+                                                default        => 'bg-slate-100 text-slate-800'
                                             };
                                         @endphp
                                         <span class="px-2.5 py-1 inline-flex text-xs font-semibold rounded-full uppercase tracking-wider {{ $roleBadge }}">
@@ -215,9 +263,15 @@
                 <div>
                     <label class="block text-xs font-semibold text-gray-600 uppercase tracking-wider mb-1">Role</label>
                     <select id="edit_role" name="role" required class="w-full text-sm rounded-xl border-gray-200 focus:border-indigo-500 focus:ring-indigo-500">
-                        <option value="viewer">Viewer (Read-Only)</option>
-                        <option value="admin">Admin (System Manager)</option>
-                        <option value="superadmin">Superadmin (Full Access)</option>
+                        <option value="superadmin">Superadmin</option>
+                        <option value="admin">Admin</option>
+                        <option value="viewer">Viewer</option>
+                        <option value="POIC, SMSB">POIC, SMSB</option>
+                        <option value="POIC, ASDB">POIC, ASDB</option>
+                        <option value="POIC, ADMIN">POIC, ADMIN</option>
+                        <option value="POIC, REB">POIC, REB</option>
+                        <option value="OPNS">OPNS</option>
+                        <option value="DUTY SERVER">DUTY SERVER</option>
                     </select>
                 </div>
 

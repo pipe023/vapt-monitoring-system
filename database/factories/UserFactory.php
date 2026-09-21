@@ -26,7 +26,7 @@ class UserFactory extends Factory
     {
         return [
             'username' => fake()->unique()->userName(),
-            'role'     => 'viewer',
+            'role'     => User::ROLE_POIC_SMSB,
             'password' => static::$password ??= Hash::make('password'),
         ];
     }

@@ -32,7 +32,7 @@ class RegisteredUserController extends Controller
     {
         $request->validate([
             'username' => ['required', 'string', 'max:255', 'unique:'.User::class],
-            'role'     => ['required', Rule::in(['superadmin', 'admin', 'viewer'])],
+            'role'     => ['required', Rule::in(User::validRoles())],
             'password' => ['required', 'confirmed', Rules\Password::defaults()],
         ]);
 
@@ -61,7 +61,7 @@ class RegisteredUserController extends Controller
     {
         $request->validate([
             'username' => ['required', 'string', 'max:255', Rule::unique('users')->ignore($user->id)],
-            'role'     => ['required', Rule::in(['superadmin', 'admin', 'viewer'])],
+            'role'     => ['required', Rule::in(User::validRoles())],
         ]);
 
         $oldRole = $user->role;

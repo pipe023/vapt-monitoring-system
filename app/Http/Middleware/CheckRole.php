@@ -16,6 +16,14 @@ class CheckRole
             abort(403, 'Unauthorized.');
         }
 
+        if ($role === 'document_access') {
+            if ($user->canAccessDocumentTracking()) {
+                return $next($request);
+            }
+
+            abort(403, 'Unauthorized action. Document tracking access required.');
+        }
+
         // Superadmin bypass for admin routes
         if ($role === 'admin' && ($user->isSuperAdmin() || $user->isAdmin())) {
             return $next($request);

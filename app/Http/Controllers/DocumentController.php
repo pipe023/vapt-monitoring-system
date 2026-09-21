@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Document;
+use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 
@@ -10,7 +11,19 @@ class DocumentController extends Controller
 {
     public function index(Request $request)
     {
-        $query = Document::query();
+        $portalUser = $request->user();
+        $documentUser = $this->resolveDocumentTrackingUser($request);
+
+        if (! $portalUser || ! session('document_tracking_session') || ! $documentUser) {
+            return view('documents.index', [
+                'documents' => collect(),
+                'documentCounts' => collect(),
+                'showDocumentLogin' => true,
+                'documentTrackingUser' => null,
+            ]);
+        }
+
+        $query = Document::query()->with('user');
 
         if ($request->filled('search')) {
             $search = $request->string('search');
@@ -25,16 +38,30 @@ class DocumentController extends Controller
             $query->where('status', $request->string('status'));
         }
 
+        if (! $documentUser->canViewAllDocuments()) {
+            $query->whereHas('user', function ($builder) use ($documentUser) {
+                $builder->where('role', $documentUser->role);
+            });
+        }
+
         $documents = $query->latest()->get();
         $documentCounts = $documents->groupBy('status')->map->count();
 
-        return view('documents.index', compact('documents', 'documentCounts'));
+        return view('documents.index', [
+            'documents' => $documents,
+            'documentCounts' => $documentCounts,
+            'showDocumentLogin' => false,
+            'documentTrackingUser' => $documentUser,
+        ]);
     }
 
     public function store(Request $request)
     {
+        $documentUser = $this->resolveDocumentTrackingUser($request);
+        $this->authorizeDocumentAccess($documentUser);
+
         $validated = $this->validated($request);
-        $validated['user_id'] = $request->user()->id;
+        $validated['user_id'] = $documentUser->id;
 
         if ($request->hasFile('file')) {
             $validated['file_path'] = $request->file('file')->store('documents', 'local');
@@ -48,6 +75,9 @@ class DocumentController extends Controller
 
     public function update(Request $request, Document $document)
     {
+        $documentUser = $this->resolveDocumentTrackingUser($request);
+        $this->authorizeDocumentAccess($documentUser, $document);
+
         $validated = $this->validated($request);
 
         if ($request->hasFile('file')) {
@@ -61,23 +91,33 @@ class DocumentController extends Controller
         return redirect()->route('documents.index')->with('success', 'Document updated successfully.');
     }
 
-    public function destroy(Document $document)
+    public function destroy(Request $request, Document $document)
     {
-        Storage::disk('local')->delete($document->file_path);
+        $documentUser = $this->resolveDocumentTrackingUser($request);
+        $this->authorizeDocumentAccess($documentUser, $document);
+
+        if ($document->file_path) {
+            Storage::disk('local')->delete($document->file_path);
+        }
+
         $document->delete();
 
         return redirect()->route('documents.index')->with('success', 'Document deleted successfully.');
     }
 
-    public function download(Document $document)
+    public function download(Request $request, Document $document)
     {
+        $documentUser = $this->resolveDocumentTrackingUser($request);
+        $this->authorizeDocumentAccess($documentUser, $document);
         abort_unless($document->file_path && Storage::disk('local')->exists($document->file_path), 404);
 
         return Storage::disk('local')->download($document->file_path, $document->file_name);
     }
 
-    public function view(Document $document)
+    public function view(Request $request, Document $document)
     {
+        $documentUser = $this->resolveDocumentTrackingUser($request);
+        $this->authorizeDocumentAccess($documentUser, $document);
         abort_unless($document->file_path && Storage::disk('local')->exists($document->file_path), 404);
 
         $disk = Storage::disk('local');
@@ -180,6 +220,32 @@ class DocumentController extends Controller
             'fileName' => '',
             'content' => [$message],
         ])->header('Cache-Control', 'no-store, no-cache, must-revalidate');
+    }
+
+    private function resolveDocumentTrackingUser(Request $request): ?User
+    {
+        $userId = $request->session()->get('document_tracking_user_id');
+
+        return $userId ? User::find($userId) : null;
+    }
+
+    private function authorizeDocumentAccess(?\App\Models\User $user, ?Document $document = null): void
+    {
+        if (! $user) {
+            abort(403, 'Unauthorized.');
+        }
+
+        if ($user->canViewAllDocuments()) {
+            return;
+        }
+
+        if (! $user->canAccessDocumentTracking()) {
+            abort(403, 'You do not have access to the document tracking module.');
+        }
+
+        if ($document && $document->user && $document->user->role !== $user->role) {
+            abort(403, 'This document belongs to another office role.');
+        }
     }
 
     private function validated(Request $request): array

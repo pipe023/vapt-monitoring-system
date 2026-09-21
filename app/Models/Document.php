@@ -12,4 +12,9 @@ class Document extends Model
     ];
 
     protected $casts = ['due_date' => 'date'];
+
+    public function user()
+    {
+        return $this->belongsTo(User::class);
+    }
 }
