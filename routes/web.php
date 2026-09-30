@@ -32,6 +32,10 @@ Route::middleware(['auth'])->group(function () {
     Route::post('/documents/login', [DocumentTrackingLoginController::class, 'login'])->name('documents.login.store');
     Route::post('/documents/logout', [DocumentTrackingLoginController::class, 'logout'])->name('documents.logout');
     Route::get('/documents', [DocumentController::class, 'index'])->name('documents.index');
+    Route::get('/documents/deadline-alerts', [DocumentController::class, 'deadlineAlerts'])->name('documents.deadline-alerts');
+    Route::post('/documents/push-subscriptions', [\App\Http\Controllers\DocumentPushSubscriptionController::class, 'store'])->middleware('throttle:20,1')->name('documents.push.store');
+    Route::post('/documents/push-subscriptions/status', [\App\Http\Controllers\DocumentPushSubscriptionController::class, 'status'])->name('documents.push.status');
+    Route::delete('/documents/push-subscriptions', [\App\Http\Controllers\DocumentPushSubscriptionController::class, 'destroy'])->name('documents.push.destroy');
     Route::get('/documents/{document}/view', [DocumentController::class, 'view'])->name('documents.view');
     Route::get('/documents/{document}/download', [DocumentController::class, 'download'])->name('documents.download');
     Route::post('/documents', [DocumentController::class, 'store'])->name('documents.store');

@@ -84,6 +84,8 @@
                     @endforeach
                 </div>
 
+                @include('documents.deadline-alerts')
+
                 @if(auth()->user()->canManageDocumentTracking())
                     <form method="POST" action="{{ route('documents.store') }}" enctype="multipart/form-data" class="rounded-2xl border border-gray-100 bg-white p-6 shadow-sm">
                         @csrf

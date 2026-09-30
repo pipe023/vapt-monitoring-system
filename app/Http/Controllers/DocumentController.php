@@ -4,11 +4,24 @@ namespace App\Http\Controllers;
 
 use App\Models\Document;
 use App\Models\User;
+use App\Services\DocumentDeadlineAlerts;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 
 class DocumentController extends Controller
 {
+    public function deadlineAlerts(Request $request, DocumentDeadlineAlerts $alerts)
+    {
+        abort_unless($request->session()->get('document_tracking_session'), 403);
+        $user = $this->resolveDocumentTrackingUser($request);
+        $this->authorizeDocumentAccess($user);
+
+        return response()->json([
+            'user_id' => $user->id,
+            'alerts' => $alerts->forUser($user),
+        ])->header('Cache-Control', 'no-store, private');
+    }
+
     public function index(Request $request)
     {
         $portalUser = $request->user();

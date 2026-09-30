@@ -1,8 +1,10 @@
 
 
 import Alpine from 'alpinejs';
+import documentDeadlineAlerts from './document-deadline-alerts';
 
 window.Alpine = Alpine;
+Alpine.data('documentDeadlineAlerts', documentDeadlineAlerts);
 
 Alpine.start();
 

@@ -95,7 +95,7 @@
 
             <!-- FOOTER -->
             <div class="mt-8 text-center text-xs text-gray-400">
-                &copy; {{ date('Y') }} VAPT Status Monitoring. All rights reserved.
+                &copy; {{ date('Y') }} ISG Monitoring System. All rights reserved.
             </div>
 
         </div>
