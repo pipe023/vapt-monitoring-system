@@ -27,6 +27,14 @@ class DocumentDeadlineAlertsTest extends TestCase
             Document::create(['title' => $title, 'status' => $status, 'due_date' => $dueDate,
                 'category' => 'Memo', 'user_id' => $user->id]);
         }
+        Document::create([
+            'title' => 'Completed but still Pending',
+            'status' => 'Pending',
+            'due_date' => '2026-09-21',
+            'completed_at' => now(),
+            'category' => 'Memo',
+            'user_id' => $user->id,
+        ]);
 
         $this->actingAs($user)->withSession([
             'document_tracking_session' => true, 'document_tracking_user_id' => $user->id,
@@ -34,7 +42,8 @@ class DocumentDeadlineAlertsTest extends TestCase
             ->assertOk()->assertJsonCount(3, 'alerts')
             ->assertJsonPath('alerts.0.label', '1 day overdue')
             ->assertJsonPath('alerts.1.label', 'Due today')
-            ->assertJsonPath('alerts.2.label', 'Due in 3 days');
+            ->assertJsonPath('alerts.2.label', 'Due in 3 days')
+            ->assertJsonMissing(['title' => 'Completed but still Pending']);
     }
 
     public function test_alerts_use_the_document_account_not_the_portal_account(): void

@@ -38,7 +38,9 @@ Route::middleware(['auth'])->group(function () {
     Route::delete('/documents/push-subscriptions', [\App\Http\Controllers\DocumentPushSubscriptionController::class, 'destroy'])->name('documents.push.destroy');
     Route::get('/documents/{document}/view', [DocumentController::class, 'view'])->name('documents.view');
     Route::get('/documents/{document}/download', [DocumentController::class, 'download'])->name('documents.download');
+    Route::get('/documents/{document}/submitted-document', [DocumentController::class, 'downloadSubmittedDocument'])->name('documents.submitted-document');
     Route::post('/documents', [DocumentController::class, 'store'])->name('documents.store');
+    Route::post('/documents/{document}/complete', [DocumentController::class, 'complete'])->name('documents.complete');
     Route::put('/documents/{document}', [DocumentController::class, 'update'])->name('documents.update');
     Route::delete('/documents/{document}', [DocumentController::class, 'destroy'])->name('documents.destroy');
 

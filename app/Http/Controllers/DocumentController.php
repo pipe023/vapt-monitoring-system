@@ -30,39 +30,53 @@ class DocumentController extends Controller
         if (! $portalUser || ! session('document_tracking_session') || ! $documentUser) {
             return view('documents.index', [
                 'documents' => collect(),
+                'completedDocuments' => collect(),
                 'documentCounts' => collect(),
+                'completedCount' => 0,
                 'showDocumentLogin' => true,
                 'documentTrackingUser' => null,
             ]);
         }
 
-        $query = Document::query()->with('user');
-
-        if ($request->filled('search')) {
-            $search = $request->string('search');
-            $query->where(function ($builder) use ($search) {
-                $builder->where('title', 'like', "%{$search}%")
-                    ->orWhere('category', 'like', "%{$search}%")
-                    ->orWhere('owner', 'like', "%{$search}%");
-            });
-        }
-
-        if ($request->filled('status')) {
-            $query->where('status', $request->string('status'));
-        }
-
+        $visibilityQuery = Document::query()->with('user');
         if (! $documentUser->canViewAllDocuments()) {
-            $query->whereHas('user', function ($builder) use ($documentUser) {
+            $visibilityQuery->whereHas('user', function ($builder) use ($documentUser) {
                 $builder->where('role', $documentUser->role);
             });
         }
 
-        $documents = $query->latest()->get();
-        $documentCounts = $documents->groupBy('status')->map->count();
+        $completedDocuments = (clone $visibilityQuery)
+            ->whereNotNull('completed_at')
+            ->latest()
+            ->get();
+        $completedCount = $completedDocuments->count();
+        $activeQuery = clone $visibilityQuery;
+
+        if ($request->filled('search')) {
+            $search = $request->string('search');
+            $activeQuery->where(function ($builder) use ($search) {
+                $builder->where('title', 'like', "%{$search}%")
+                    ->orWhere('category', 'like', "%{$search}%")
+                    ->orWhere('branch', 'like', "%{$search}%")
+                    ->orWhere('owner', 'like', "%{$search}%");
+            });
+        }
+
+        $countQuery = (clone $activeQuery)->whereNull('completed_at');
+        $listQuery = (clone $activeQuery)->whereNull('completed_at');
+        if ($request->filled('status')) {
+            $listQuery->where('status', $request->string('status'));
+            $countQuery->where('status', $request->string('status'));
+        }
+
+        $documents = $listQuery->latest()->get();
+        $documentCounts = $countQuery->get()->groupBy('status')->map->count();
 
         return view('documents.index', [
             'documents' => $documents,
+            'completedDocuments' => $completedDocuments,
             'documentCounts' => $documentCounts,
+            'completedCount' => $completedCount,
             'showDocumentLogin' => false,
             'documentTrackingUser' => $documentUser,
         ]);
@@ -112,10 +126,47 @@ class DocumentController extends Controller
         if ($document->file_path) {
             Storage::disk('local')->delete($document->file_path);
         }
+        if ($document->submitted_document_path) {
+            Storage::disk('local')->delete($document->submitted_document_path);
+        }
 
         $document->delete();
 
         return redirect()->route('documents.index')->with('success', 'Document deleted successfully.');
+    }
+
+    public function complete(Request $request, Document $document)
+    {
+        $documentUser = $this->resolveDocumentTrackingUser($request);
+        $this->authorizeDocumentAccess($documentUser, $document);
+        abort_unless($documentUser->canManageDocumentTracking(), 403);
+
+        $validated = $request->validate([
+            'date_of_completion' => 'required|date',
+            'submitted_date' => 'required|date',
+            'receiving_office' => 'required|string|max:255',
+            'submitted_document' => 'required|file|mimes:pdf,doc,docx,xls,xlsx,ppt,pptx,jpg,jpeg,png|max:10240',
+        ]);
+
+        $submittedDocument = $validated['submitted_document'];
+        unset($validated['submitted_document']);
+        $validated['submitted_document_path'] = $submittedDocument->store('documents/submitted', 'local');
+        $validated['submitted_document_name'] = $submittedDocument->getClientOriginalName();
+        $validated['completed_at'] = $document->completed_at ?? now();
+
+        $document->update($validated);
+
+        return redirect()->route('documents.index')
+            ->with('success', 'Document marked as completed.');
+    }
+
+    public function downloadSubmittedDocument(Request $request, Document $document)
+    {
+        $documentUser = $this->resolveDocumentTrackingUser($request);
+        $this->authorizeDocumentAccess($documentUser, $document);
+        abort_unless($document->submitted_document_path && Storage::disk('local')->exists($document->submitted_document_path), 404);
+
+        return Storage::disk('local')->download($document->submitted_document_path, $document->submitted_document_name);
     }
 
     public function download(Request $request, Document $document)
@@ -266,6 +317,7 @@ class DocumentController extends Controller
         $validated = $request->validate([
             'title' => 'required|string|max:255',
             'category' => 'required|string|max:100',
+            'branch' => ['required', \Illuminate\Validation\Rule::in(Document::BRANCHES)],
             'status' => 'required|in:Pending,In Review,Approved,Archived',
             'review_office' => 'nullable|string|max:255|required_if:status,In Review',
             'owner' => 'nullable|string|max:255',

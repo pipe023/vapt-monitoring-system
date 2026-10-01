@@ -18,6 +18,7 @@ class DocumentDeadlineAlerts
 
         return Document::query()
             ->whereIn('status', ['Pending', 'In Review'])
+            ->whereNull('completed_at')
             ->whereDate('due_date', '<=', $today->copy()->addDays(3))
             ->when(! $user->canViewAllDocuments(), fn ($query) => $query
                 ->whereHas('user', fn ($owner) => $owner->where('role', $user->role)))

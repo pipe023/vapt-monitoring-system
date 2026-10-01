@@ -1,6 +1,10 @@
 @php
     $showDocumentLogin = $showDocumentLogin ?? false;
     $documentTrackingUser = $documentTrackingUser ?? null;
+    $completedCount = $completedCount ?? 0;
+    $completedDocuments = $completedDocuments ?? collect();
+    $columnCount = 8 + (auth()->user()->canManageDocumentTracking() ? 1 : 0);
+    $documentBranches = \App\Models\Document::BRANCHES;
 @endphp
 
 <x-app-layout>
@@ -45,25 +49,19 @@
 
                     <form method="POST" action="{{ route('documents.login.store') }}" class="space-y-5">
                         @csrf
-
                         <div>
                             <label for="username" class="mb-2 block text-xs font-semibold uppercase tracking-wider text-slate-600">Username</label>
                             <input id="username" type="text" name="username" value="{{ old('username') }}" required autofocus class="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-200" placeholder="Enter username">
                         </div>
-
                         <div>
                             <label for="password" class="mb-2 block text-xs font-semibold uppercase tracking-wider text-slate-600">Password</label>
                             <input id="password" type="password" name="password" required class="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-200" placeholder="••••••••">
                         </div>
-
                         <label for="remember" class="flex items-center gap-2 text-sm text-slate-600">
                             <input id="remember" type="checkbox" name="remember" class="rounded border-slate-300 text-emerald-600 focus:ring-emerald-500">
                             Remember me
                         </label>
-
-                        <button type="submit" class="w-full rounded-xl bg-emerald-600 px-4 py-3 text-sm font-semibold text-white transition hover:bg-emerald-700">
-                            Sign In to Document Tracking
-                        </button>
+                        <button type="submit" class="w-full rounded-xl bg-emerald-600 px-4 py-3 text-sm font-semibold text-white transition hover:bg-emerald-700">Sign In to Document Tracking</button>
                     </form>
                 </div>
             @else
@@ -75,53 +73,60 @@
                     <div class="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">{{ $errors->first() }}</div>
                 @endif
 
-                <div class="grid gap-4 sm:grid-cols-4">
+                <div class="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-5">
                     @foreach(['Pending' => 'amber', 'In Review' => 'blue', 'Approved' => 'emerald', 'Archived' => 'slate'] as $status => $color)
-                        <div class="rounded-2xl border border-gray-100 bg-white p-5 shadow-sm">
-                            <p class="text-xs font-bold uppercase tracking-wider text-gray-400">{{ $status }}</p>
-                            <p class="mt-2 text-3xl font-semibold text-{{ $color }}-600">{{ $documentCounts[$status] ?? 0 }}</p>
+                        <div class="rounded-lg border border-gray-100 bg-white px-3 py-2.5">
+                            <p class="text-[10px] font-bold uppercase tracking-wider text-gray-400">{{ $status }}</p>
+                            <p class="mt-1 text-2xl font-semibold text-{{ $color }}-600">{{ $documentCounts[$status] ?? 0 }}</p>
                         </div>
                     @endforeach
+                    <button type="button" data-completed-open="completed-documents-modal" aria-haspopup="dialog" class="rounded-lg border border-emerald-100 bg-emerald-50 px-3 py-2.5 text-left transition hover:border-emerald-300">
+                        <p class="text-[10px] font-bold uppercase tracking-wider text-emerald-700">Completed Documents</p>
+                        <p class="mt-1 text-2xl font-semibold text-emerald-700">{{ $completedCount }}</p>
+                    </button>
                 </div>
 
                 @include('documents.deadline-alerts')
 
                 @if(auth()->user()->canManageDocumentTracking())
-                    <form method="POST" action="{{ route('documents.store') }}" enctype="multipart/form-data" class="rounded-2xl border border-gray-100 bg-white p-6 shadow-sm">
+                    <form method="POST" action="{{ route('documents.store') }}" enctype="multipart/form-data" class="overflow-hidden rounded-lg border border-slate-200 bg-white">
                         @csrf
-                        <div class="mb-5 flex items-center justify-between border-b border-gray-100 pb-3">
+                        <div class="flex items-center justify-between border-b border-slate-100 px-4 py-3">
                             <div>
-                                <h3 class="font-semibold text-gray-800">Add document</h3>
-                                <p class="mt-0.5 text-xs text-gray-400">Record metadata and attach the working file.</p>
+                                <h3 class="text-sm font-semibold text-slate-800">Add document</h3>
+                                <p class="mt-0.5 text-xs text-slate-500">Create a new tracking record.</p>
                             </div>
-                            <span class="rounded-full bg-emerald-50 px-3 py-1 text-[10px] font-bold uppercase tracking-wider text-emerald-700">Admin entry</span>
                         </div>
-                        <div class="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-                            <div class="lg:col-span-2"><label class="text-xs font-semibold text-gray-600">Document title</label><input name="title" required value="{{ old('title') }}" class="mt-1 w-full rounded-lg border-gray-300 text-sm" placeholder="e.g. VAPT Completion Report"></div>
-                            <div><label class="text-xs font-semibold text-gray-600">Category</label><input name="category" required value="{{ old('category') }}" class="mt-1 w-full rounded-lg border-gray-300 text-sm" placeholder="Assessment, memo..."></div>
-                            <div><label class="text-xs font-semibold text-gray-600">Status</label><select name="status" class="mt-1 w-full rounded-lg border-gray-300 text-sm"><option>Pending</option><option>In Review</option><option>Approved</option><option>Archived</option></select></div>
-                            <div data-review-office-field class="hidden">
-                                <label class="text-xs font-semibold text-gray-600">Review office</label>
-                                <select name="review_office" class="mt-1 w-full rounded-lg border-gray-300 text-sm">
+                        <div class="grid gap-3 p-4 sm:grid-cols-2 xl:grid-cols-6">
+                            <div class="sm:col-span-2"><label class="block text-[11px] font-medium text-slate-600">Document title</label><input name="title" required value="{{ old('title') }}" class="mt-1 w-full rounded-md border-slate-200 px-3 py-2 text-sm focus:border-emerald-500 focus:ring-emerald-500" placeholder="e.g. VAPT Completion Report"></div>
+                            <div class="xl:col-span-2"><label class="block text-[11px] font-medium text-slate-600">Category</label><input name="category" required value="{{ old('category') }}" class="mt-1 w-full rounded-md border-slate-200 px-3 py-2 text-sm focus:border-emerald-500 focus:ring-emerald-500" placeholder="Assessment, memo..."></div>
+                            <div><label class="block text-[11px] font-medium text-slate-600">Branch</label><select name="branch" required class="mt-1 w-full rounded-md border-slate-200 px-3 py-2 text-sm focus:border-emerald-500 focus:ring-emerald-500"><option value="">Select branch</option>@foreach($documentBranches as $branch)<option value="{{ $branch }}" @selected(old('branch') === $branch)>{{ $branch }}</option>@endforeach</select></div>
+                            <div><label class="block text-[11px] font-medium text-slate-600">Status</label><select name="status" class="mt-1 w-full rounded-md border-slate-200 px-3 py-2 text-sm focus:border-emerald-500 focus:ring-emerald-500"><option>Pending</option><option>In Review</option><option>Approved</option><option>Archived</option></select></div>
+                            <div data-review-office-field class="hidden sm:col-span-2">
+                                <label class="block text-[11px] font-medium text-slate-600">Review office</label>
+                                <select name="review_office" class="mt-1 w-full rounded-md border-slate-200 px-3 py-2 text-sm focus:border-emerald-500 focus:ring-emerald-500">
                                     <option value="">Select review office</option>
                                     @foreach(['OIC ASDB', 'OIC SMSB', 'OIC ADMIN', 'DUTY OFFICER', 'EX-O, ISG', 'CO, ISG'] as $office)
                                         <option value="{{ $office }}" @selected(old('review_office') === $office)>{{ $office }}</option>
                                     @endforeach
                                 </select>
                             </div>
-                            <div><label class="text-xs font-semibold text-gray-600">Owner</label><input name="owner" value="{{ old('owner') }}" class="mt-1 w-full rounded-lg border-gray-300 text-sm" placeholder="Person or unit"></div>
-                            <div><label class="text-xs font-semibold text-gray-600">Due date</label><input type="date" name="due_date" value="{{ old('due_date') }}" class="mt-1 w-full rounded-lg border-gray-300 text-sm"></div>
-                            <div class="lg:col-span-2"><label class="text-xs font-semibold text-gray-600">Attachment</label><input type="file" name="file" class="mt-1 block w-full rounded-lg border border-gray-300 p-2 text-sm text-gray-600"></div>
-                            <div class="lg:col-span-3"><label class="text-xs font-semibold text-gray-600">Description</label><input name="description" value="{{ old('description') }}" class="mt-1 w-full rounded-lg border-gray-300 text-sm" placeholder="Optional context or notes"></div>
-                            <div class="flex items-end"><button class="w-full rounded-lg bg-emerald-600 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-emerald-700">Add document</button></div>
+                            <div class="xl:col-span-2"><label class="block text-[11px] font-medium text-slate-600">Unit/Office (Sender)</label><input name="owner" value="{{ old('owner') }}" class="mt-1 w-full rounded-md border-slate-200 px-3 py-2 text-sm focus:border-emerald-500 focus:ring-emerald-500" placeholder="Person or unit"></div>
+                            <div class="xl:col-span-2"><label class="block text-[11px] font-medium text-slate-600">Due date</label><input type="date" name="due_date" value="{{ old('due_date') }}" class="mt-1 w-full rounded-md border-slate-200 px-3 py-2 text-sm focus:border-emerald-500 focus:ring-emerald-500"></div>
+                            <div class="sm:col-span-2 xl:col-span-2"><label class="block text-[11px] font-medium text-slate-600">Attachment</label><input type="file" name="file" class="mt-1 block w-full max-w-full rounded-md border border-slate-200 p-1.5 text-xs text-slate-600"></div>
+                            <div class="sm:col-span-2 xl:col-span-3"><label class="block text-[11px] font-medium text-slate-600">Description</label><input name="description" value="{{ old('description') }}" class="mt-1 w-full rounded-md border-slate-200 px-3 py-2 text-sm focus:border-emerald-500 focus:ring-emerald-500" placeholder="Optional context or notes"></div>
                         </div>
+                        <div class="flex justify-end border-t border-slate-100 px-4 py-3"><button class="rounded-md bg-emerald-700 px-4 py-2 text-sm font-medium text-white transition hover:bg-emerald-800">Add document</button></div>
                     </form>
                 @endif
 
                 <section class="grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(22rem,0.42fr)]">
                     <div class="relative overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-sm">
+                    <div class="border-b border-gray-100 px-5 py-4">
+                        <h3 class="text-sm font-semibold text-gray-800">Compliances</h3>
+                    </div>
                     <form method="GET" class="flex flex-col gap-3 border-b border-gray-100 p-5 sm:flex-row">
-                        <input name="search" value="{{ request('search') }}" class="w-full rounded-lg border-gray-300 text-sm sm:flex-1" placeholder="Search title, category, or owner">
+                        <input name="search" value="{{ request('search') }}" class="w-full rounded-lg border-gray-300 text-sm sm:flex-1" placeholder="Search title, category, branch, or owner">
                         <select name="status" class="rounded-lg border-gray-300 text-sm"><option value="">All statuses</option>@foreach(['Pending', 'In Review', 'Approved', 'Archived'] as $status)<option value="{{ $status }}" @selected(request('status') === $status)>{{ $status }}</option>@endforeach</select>
                         <button class="rounded-lg border border-gray-300 px-4 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-50">Filter</button>
                     </form>
@@ -129,7 +134,7 @@
                         <table class="min-w-full divide-y divide-gray-200">
                             <thead class="bg-gray-50">
                                 <tr>
-                                    @foreach(['Document', 'Category', 'Owner', 'Due date', 'Status', 'Attachment', 'Updated'] as $heading)
+                                    @foreach(['Document', 'Category', 'Branch', 'Unit/Office (Sender)', 'Due date', 'Status', 'Attachment', 'Updated'] as $heading)
                                         <th class="px-5 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">{{ $heading }}</th>
                                     @endforeach
                                     @if(auth()->user()->canManageDocumentTracking())
@@ -142,6 +147,7 @@
                                     <tr class="hover:bg-gray-50">
                                         <td class="max-w-xs px-5 py-4"><p class="font-semibold text-gray-900">{{ $document->title }}</p><p class="mt-1 truncate text-xs text-gray-500">{{ $document->description ?: 'No description' }}</p></td>
                                         <td class="whitespace-nowrap px-5 py-4 text-gray-600">{{ $document->category }}</td>
+                                        <td class="whitespace-nowrap px-5 py-4 text-gray-600">{{ $document->branch ?: 'Unassigned' }}</td>
                                         <td class="whitespace-nowrap px-5 py-4 text-gray-600">{{ $document->owner ?: 'Unassigned' }}</td>
                                         <td class="whitespace-nowrap px-5 py-4 text-gray-600">{{ $document->due_date?->format('M d, Y') ?: 'No deadline' }}</td>
                                         <td class="whitespace-nowrap px-5 py-4"><span class="rounded-full px-2.5 py-1 text-xs font-semibold {{ match($document->status) { 'Approved' => 'bg-emerald-100 text-emerald-800', 'In Review' => 'bg-blue-100 text-blue-800', 'Archived' => 'bg-slate-100 text-slate-700', default => 'bg-amber-100 text-amber-800' } }}">{{ $document->status }}</span></td>
@@ -154,7 +160,7 @@
                                         @endif
                                     </tr>
                                 @empty
-                                    <tr><td colspan="8" class="px-5 py-12 text-center text-sm text-gray-400">No documents match the current filters.</td></tr>
+                                    <tr><td colspan="{{ $columnCount }}" class="px-5 py-12 text-center text-sm text-gray-400">No documents match the current filters.</td></tr>
                                 @endforelse
                             </tbody>
                         </table>
@@ -178,6 +184,7 @@
                                         <div class="grid gap-3 sm:grid-cols-2">
                                             <div class="sm:col-span-2"><label class="text-xs font-semibold text-gray-600">Document title</label><input name="title" required value="{{ $document->title }}" class="mt-1 w-full rounded-lg border-gray-300 text-xs"></div>
                                             <div><label class="text-xs font-semibold text-gray-600">Category</label><input name="category" required value="{{ $document->category }}" class="mt-1 w-full rounded-lg border-gray-300 text-xs"></div>
+                                            <div><label class="text-xs font-semibold text-gray-600">Branch</label><select name="branch" required class="mt-1 w-full rounded-lg border-gray-300 text-xs"><option value="">Select branch</option>@foreach($documentBranches as $branch)<option value="{{ $branch }}" @selected($document->branch === $branch)>{{ $branch }}</option>@endforeach</select></div>
                                             <div><label class="text-xs font-semibold text-gray-600">Status</label><select name="status" class="mt-1 w-full rounded-lg border-gray-300 text-xs">@foreach(['Pending', 'In Review', 'Approved', 'Archived'] as $status)<option @selected($document->status === $status)>{{ $status }}</option>@endforeach</select></div>
                                             <div data-review-office-field class="{{ $document->status === 'In Review' ? '' : 'hidden' }} sm:col-span-2"><label class="text-xs font-semibold text-gray-600">Review office</label><select name="review_office" class="mt-1 w-full rounded-lg border-gray-300 text-xs"><option value="">Select review office</option>@foreach(['OIC ASDB', 'OIC SMSB', 'OIC ADMIN', 'DUTY OFFICER', 'EX-O, ISG', 'CO, ISG'] as $office)<option value="{{ $office }}" @selected($document->review_office === $office)>{{ $office }}</option>@endforeach</select></div>
                                             <div><label class="text-xs font-semibold text-gray-600">Owner</label><input name="owner" value="{{ $document->owner }}" class="mt-1 w-full rounded-lg border-gray-300 text-xs" placeholder="Owner"></div>
@@ -190,10 +197,44 @@
                                             <button type="submit" class="rounded-lg bg-emerald-600 px-3 py-2 text-xs font-semibold text-white hover:bg-emerald-700">Save changes</button>
                                         </div>
                                     </form>
+                                    @unless($document->completed_at)
+                                        <div class="mt-4 border-t border-gray-100 pt-4">
+                                            <button type="button" data-completion-open="complete-document-{{ $document->id }}" class="rounded-lg bg-emerald-600 px-3 py-2 text-xs font-semibold text-white hover:bg-emerald-700">Mark Completed</button>
+                                        </div>
+                                    @endunless
                                     <form method="POST" action="{{ route('documents.destroy', $document) }}" onsubmit="return confirm('Delete this document record?')" class="mt-4 border-t border-gray-100 pt-4">
                                         @csrf
                                         @method('DELETE')
                                         <button type="submit" class="text-xs font-semibold text-red-600 hover:text-red-800">Delete record</button>
+                                    </form>
+                                </div>
+                            </div>
+                        @endif
+                    @endforeach
+
+                    @foreach($documents as $document)
+                        @if(auth()->user()->canManageDocumentTracking() && ! $document->completed_at)
+                            <div id="complete-document-{{ $document->id }}" data-completion-modal class="fixed inset-0 z-[60] hidden items-center justify-center bg-slate-900/30 p-4 backdrop-blur-sm">
+                                <div role="dialog" aria-modal="true" aria-labelledby="completion-title-{{ $document->id }}" class="max-h-[90vh] w-full max-w-xl overflow-y-auto rounded-xl border border-slate-200 bg-white p-5 shadow-2xl">
+                                    <div class="mb-3 flex items-start justify-between border-b border-slate-100 pb-2">
+                                        <div>
+                                            <h3 id="completion-title-{{ $document->id }}" class="text-sm font-semibold text-slate-800">Complete document</h3>
+                                            <p class="mt-0.5 text-[11px] text-slate-500">{{ $document->title }}</p>
+                                        </div>
+                                        <button type="button" data-completion-close="complete-document-{{ $document->id }}" class="text-xs font-semibold text-slate-500 hover:text-slate-700">Close</button>
+                                    </div>
+                                    <form method="POST" action="{{ route('documents.complete', $document) }}" enctype="multipart/form-data" class="space-y-4">
+                                        @csrf
+                                        <div class="grid gap-3 sm:grid-cols-2">
+                                            <div><label class="block text-xs font-medium text-slate-600">Date of Completion</label><input type="date" name="date_of_completion" value="{{ old('date_of_completion') }}" required class="mt-1 w-full rounded-md border-slate-200 text-sm focus:border-emerald-500 focus:ring-emerald-500"></div>
+                                            <div><label class="block text-xs font-medium text-slate-600">Submitted Date</label><input type="date" name="submitted_date" value="{{ old('submitted_date') }}" required class="mt-1 w-full rounded-md border-slate-200 text-sm focus:border-emerald-500 focus:ring-emerald-500"></div>
+                                            <div class="sm:col-span-2"><label class="block text-xs font-medium text-slate-600">Receiving Office</label><input type="text" name="receiving_office" value="{{ old('receiving_office') }}" required maxlength="255" class="mt-1 w-full rounded-md border-slate-200 text-sm focus:border-emerald-500 focus:ring-emerald-500" placeholder="Enter receiving office"></div>
+                                            <div class="sm:col-span-2"><label class="block text-xs font-medium text-slate-600">Submitted Document</label><input type="file" name="submitted_document" required accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.jpg,.jpeg,.png" class="mt-1 block w-full rounded-md border border-slate-200 p-2 text-xs text-slate-600"></div>
+                                        </div>
+                                        <div class="flex justify-end gap-2 border-t border-slate-100 pt-4">
+                                            <button type="button" data-completion-close="complete-document-{{ $document->id }}" class="rounded-md border border-slate-200 px-3 py-2 text-xs font-medium text-slate-600 hover:bg-slate-50">Cancel</button>
+                                            <button type="submit" class="rounded-md bg-emerald-700 px-3 py-2 text-xs font-semibold text-white hover:bg-emerald-800">Complete Document</button>
+                                        </div>
                                     </form>
                                 </div>
                             </div>
@@ -214,6 +255,51 @@
                         </div>
                     </aside>
                 </section>
+
+                <div id="completed-documents-modal" data-completed-modal class="fixed inset-0 z-[70] hidden items-center justify-center bg-slate-900/30 p-4 backdrop-blur-sm">
+                    <div role="dialog" aria-modal="true" aria-labelledby="completed-documents-title" class="max-h-[90vh] w-full max-w-6xl overflow-hidden rounded-xl border border-slate-200 bg-white shadow-2xl">
+                        <div class="flex items-center justify-between border-b border-slate-100 px-5 py-4">
+                            <div>
+                                <h3 id="completed-documents-title" class="text-sm font-semibold text-slate-800">Completed Documents</h3>
+                                <p class="mt-0.5 text-xs text-slate-500">{{ $completedCount }} completed records</p>
+                            </div>
+                            <button type="button" data-completed-close class="rounded-md border border-slate-200 px-3 py-1.5 text-xs font-medium text-slate-600 hover:bg-slate-50">Close</button>
+                        </div>
+                        <div class="max-h-[70vh] overflow-auto">
+                            <table class="w-full min-w-[64rem] divide-y divide-gray-200 text-sm">
+                                <thead class="sticky top-0 bg-gray-50">
+                                    <tr>
+                                        @foreach(['Document', 'Category', 'Branch', 'Unit/Office (Sender)', 'Date of Completion', 'Submitted Date', 'Receiving Office', 'Submitted Document'] as $heading)
+                                            <th class="px-4 py-3 text-left text-[10px] font-semibold uppercase tracking-wider text-gray-500">{{ $heading }}</th>
+                                        @endforeach
+                                    </tr>
+                                </thead>
+                                <tbody class="divide-y divide-gray-100">
+                                    @forelse($completedDocuments as $completedDocument)
+                                        <tr class="hover:bg-gray-50">
+                                            <td class="px-4 py-3 font-medium text-gray-800">{{ $completedDocument->title }}</td>
+                                            <td class="px-4 py-3 text-gray-600">{{ $completedDocument->category }}</td>
+                                            <td class="px-4 py-3 text-gray-600">{{ $completedDocument->branch ?: 'Unassigned' }}</td>
+                                            <td class="px-4 py-3 text-gray-600">{{ $completedDocument->owner ?: 'Unassigned' }}</td>
+                                            <td class="whitespace-nowrap px-4 py-3 text-gray-600">{{ $completedDocument->date_of_completion?->format('M d, Y') ?: 'Not provided' }}</td>
+                                            <td class="whitespace-nowrap px-4 py-3 text-gray-600">{{ $completedDocument->submitted_date?->format('M d, Y') ?: 'Not provided' }}</td>
+                                            <td class="px-4 py-3 text-gray-600">{{ $completedDocument->receiving_office ?: 'Not provided' }}</td>
+                                            <td class="px-4 py-3">
+                                                @if($completedDocument->submitted_document_path)
+                                                    <a href="{{ route('documents.submitted-document', $completedDocument) }}" class="font-semibold text-emerald-700 hover:underline">{{ Str::limit($completedDocument->submitted_document_name, 24) }}</a>
+                                                @else
+                                                    <span class="text-gray-400">None</span>
+                                                @endif
+                                            </td>
+                                        </tr>
+                                    @empty
+                                        <tr><td colspan="8" class="px-4 py-10 text-center text-sm text-gray-400">No completed documents yet.</td></tr>
+                                    @endforelse
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
             @endif
         </div>
     </div>
@@ -233,6 +319,61 @@
                     fallback.classList.remove('hidden');
                     emptyState.classList.add('hidden');
                     viewer.classList.remove('hidden');
+                });
+            });
+
+            const completedDocumentsModal = document.getElementById('completed-documents-modal');
+            document.querySelectorAll('[data-completed-open]').forEach(function (button) {
+                button.addEventListener('click', function () {
+                    if (completedDocumentsModal) {
+                        completedDocumentsModal.classList.remove('hidden');
+                        completedDocumentsModal.classList.add('flex');
+                    }
+                });
+            });
+
+            document.querySelectorAll('[data-completed-close]').forEach(function (button) {
+                button.addEventListener('click', function () {
+                    if (completedDocumentsModal) {
+                        completedDocumentsModal.classList.add('hidden');
+                        completedDocumentsModal.classList.remove('flex');
+                    }
+                });
+            });
+
+            completedDocumentsModal?.addEventListener('click', function (event) {
+                if (event.target === completedDocumentsModal) {
+                    completedDocumentsModal.classList.add('hidden');
+                    completedDocumentsModal.classList.remove('flex');
+                }
+            });
+
+            document.querySelectorAll('[data-completion-open]').forEach(function (button) {
+                button.addEventListener('click', function () {
+                    const modal = document.getElementById(button.dataset.completionOpen);
+                    if (modal) {
+                        modal.classList.remove('hidden');
+                        modal.classList.add('flex');
+                    }
+                });
+            });
+
+            document.querySelectorAll('[data-completion-close]').forEach(function (button) {
+                button.addEventListener('click', function () {
+                    const modal = document.getElementById(button.dataset.completionClose);
+                    if (modal) {
+                        modal.classList.add('hidden');
+                        modal.classList.remove('flex');
+                    }
+                });
+            });
+
+            document.querySelectorAll('[data-completion-modal]').forEach(function (modal) {
+                modal.addEventListener('click', function (event) {
+                    if (event.target === modal) {
+                        modal.classList.add('hidden');
+                        modal.classList.remove('flex');
+                    }
                 });
             });
 
