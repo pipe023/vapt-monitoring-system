@@ -6,6 +6,8 @@ use App\Http\Controllers\VaptSystemController;
 use App\Http\Controllers\ViewerController;
 use App\Http\Controllers\DocumentController;
 use App\Http\Controllers\DocumentTrackingLoginController;
+use App\Http\Controllers\AuditLogController;
+use App\Http\Middleware\AuditActivity;
 use App\Http\Middleware\CheckRole;
 use Illuminate\Support\Facades\Route;
 use App\Http\Middleware\CheckActivityUserRole;
@@ -18,7 +20,7 @@ Route::get('/login', function () {
     return view('welcome');
 })->name('login');
 
-Route::middleware(['auth'])->group(function () {
+Route::middleware(['auth', AuditActivity::class])->group(function () {
 
     // Monitoring site selection portal
     Route::get('/portal', function () {
@@ -63,6 +65,7 @@ Route::middleware(['auth'])->group(function () {
 
     // User Management & Role Assignment (SUPERADMIN ONLY)
     Route::middleware([CheckRole::class . ':superadmin'])->group(function () {
+        Route::get('/audit-logs', [AuditLogController::class, 'index'])->name('audit-logs.index');
         Route::get('/register', [RegisteredUserController::class, 'create'])->name('register');
         Route::post('/register', [RegisteredUserController::class, 'store']);
         Route::put('/register/users/{user}', [RegisteredUserController::class, 'update'])->name('users.update');

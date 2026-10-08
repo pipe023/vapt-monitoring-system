@@ -8,6 +8,7 @@ use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Str;
+use App\Services\AuditLogger;
 use Illuminate\Validation\ValidationException;
 
 class LoginRequest extends FormRequest
@@ -46,6 +47,7 @@ class LoginRequest extends FormRequest
         // Changed 'email' to 'username' here
         if (! Auth::attempt($this->only('username', 'password'), $this->boolean('remember'))) {
             RateLimiter::hit($this->throttleKey());
+            app(AuditLogger::class)->log($this, 'LOGIN_FAILED', targetUsername: $this->input('username'), details: 'Invalid credentials', statusCode: 401);
 
             throw ValidationException::withMessages([
                 'username' => trans('auth.failed'), // Update error message target to username
@@ -83,6 +85,6 @@ class LoginRequest extends FormRequest
      */
     public function throttleKey(): string
     {
-        return Str::transliterate(Str::lower($this->string('email')).'|'.$this->ip());
+        return Str::transliterate(Str::lower($this->string('username')).'|'.$this->ip());
     }
 }

@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Auth;
 use App\Http\Controllers\Controller;
 use App\Models\ActivityLog;
 use App\Models\User;
+use App\Services\AuditLogger;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
@@ -28,7 +29,7 @@ class RegisteredUserController extends Controller
     /**
      * Register new user and log activity.
      */
-    public function store(Request $request): RedirectResponse
+    public function store(Request $request, AuditLogger $auditLogger): RedirectResponse
     {
         $request->validate([
             'username' => ['required', 'string', 'max:255', 'unique:'.User::class],
@@ -43,13 +44,7 @@ class RegisteredUserController extends Controller
         ]);
 
         // Audit Log
-        ActivityLog::create([
-            'user_id'     => auth()->id(),
-            'action'      => 'CREATE_USER',
-            'target_user' => $newUser->username,
-            'details'     => "Assigned role: {$newUser->role}",
-            'ip_address'  => $request->ip(),
-        ]);
+        $auditLogger->log($request, 'CREATE_USER', $request->user(), $newUser->username, "Assigned role: {$newUser->role}", 302);
 
         return redirect()->route('register')->with('success', "User account '{$newUser->username}' created successfully.");
     }
@@ -57,7 +52,7 @@ class RegisteredUserController extends Controller
     /**
      * Update user details and log activity.
      */
-    public function update(Request $request, User $user): RedirectResponse
+    public function update(Request $request, User $user, AuditLogger $auditLogger): RedirectResponse
     {
         $request->validate([
             'username' => ['required', 'string', 'max:255', Rule::unique('users')->ignore($user->id)],
@@ -70,13 +65,7 @@ class RegisteredUserController extends Controller
         $user->save();
 
         // Audit Log
-        ActivityLog::create([
-            'user_id'     => auth()->id(),
-            'action'      => 'UPDATE_USER',
-            'target_user' => $user->username,
-            'details'     => "Role updated from '{$oldRole}' to '{$user->role}'",
-            'ip_address'  => $request->ip(),
-        ]);
+        $auditLogger->log($request, 'UPDATE_USER', $request->user(), $user->username, "Role updated from '{$oldRole}' to '{$user->role}'", 302);
 
         return redirect()->route('register')->with('success', "Account for '{$user->username}' updated successfully.");
     }
@@ -84,7 +73,7 @@ class RegisteredUserController extends Controller
     /**
      * Quick Password Reset method for Superadmin.
      */
-    public function resetPassword(Request $request, User $user): RedirectResponse
+    public function resetPassword(Request $request, User $user, AuditLogger $auditLogger): RedirectResponse
     {
         $request->validate([
             'password' => ['required', 'confirmed', Rules\Password::defaults()],
@@ -94,13 +83,7 @@ class RegisteredUserController extends Controller
         $user->save();
 
         // Audit Log
-        ActivityLog::create([
-            'user_id'     => auth()->id(),
-            'action'      => 'RESET_PASSWORD',
-            'target_user' => $user->username,
-            'details'     => "Password forcibly reset by Superadmin",
-            'ip_address'  => $request->ip(),
-        ]);
+        $auditLogger->log($request, 'RESET_PASSWORD', $request->user(), $user->username, 'Password forcibly reset by Superadmin', 302);
 
         return redirect()->route('register')->with('success', "Password for '{$user->username}' has been reset successfully.");
     }
@@ -108,7 +91,7 @@ class RegisteredUserController extends Controller
     /**
      * Delete user and log activity.
      */
-    public function destroy(Request $request, User $user): RedirectResponse
+    public function destroy(Request $request, User $user, AuditLogger $auditLogger): RedirectResponse
     {
         if (auth()->id() === $user->id) {
             return redirect()->route('register')->with('error', 'You cannot delete your own account while logged in.');
@@ -118,13 +101,7 @@ class RegisteredUserController extends Controller
         $user->delete();
 
         // Audit Log
-        ActivityLog::create([
-            'user_id'     => auth()->id(),
-            'action'      => 'DELETE_USER',
-            'target_user' => $targetUsername,
-            'details'     => "Account permanently deleted",
-            'ip_address'  => $request->ip(),
-        ]);
+        $auditLogger->log($request, 'DELETE_USER', $request->user(), $targetUsername, 'Account permanently deleted', 302);
 
         return redirect()->route('register')->with('success', "Account '{$targetUsername}' deleted successfully.");
     }

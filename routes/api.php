@@ -7,8 +7,9 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Validation\ValidationException;
+use App\Services\AuditLogger;
 
-Route::post('/login', function (Request $request) {
+Route::post('/login', function (Request $request, AuditLogger $auditLogger) {
     $credentials = $request->validate([
         'username' => ['required', 'string'],
         'password' => ['required', 'string'],
@@ -17,12 +18,14 @@ Route::post('/login', function (Request $request) {
     $user = User::where('username', $credentials['username'])->first();
 
     if (! $user || ! Hash::check($credentials['password'], $user->password)) {
+        $auditLogger->log($request, 'LOGIN_FAILED', targetUsername: $credentials['username'], details: 'Invalid API credentials', statusCode: 401);
+
         throw ValidationException::withMessages([
             'username' => ['The provided credentials are incorrect.'],
         ]);
     }
 
-    return response()->json([
+    $response = response()->json([
         'token' => $user->createToken('mobile-app')->plainTextToken,
         'user' => [
             'id' => $user->id,
@@ -30,9 +33,12 @@ Route::post('/login', function (Request $request) {
             'role' => $user->role,
         ],
     ]);
-});
+    $auditLogger->log($request, 'LOGIN_SUCCESS', $user, statusCode: 200);
 
-Route::middleware('auth:sanctum')->group(function () {
+    return $response;
+})->middleware('throttle:5,1');
+
+Route::middleware(['auth:sanctum', \App\Http\Middleware\AuditActivity::class])->group(function () {
 Route::get('/websites', function (Request $request) {
     $websites = VaptSystem::all()->map(function ($site) {
         return [

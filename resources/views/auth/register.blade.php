@@ -190,7 +190,7 @@
             <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
                 <h3 class="text-base font-bold text-gray-800 mb-4 pb-2 border-b border-gray-100 flex items-center justify-between">
                     <span>Superadmin Activity & Audit Trail</span>
-                    <span class="text-xs font-normal text-gray-400">Showing last 20 events</span>
+                    <a href="{{ route('audit-logs.index') }}" class="text-xs font-semibold text-indigo-600 hover:text-indigo-800">View all activity</a>
                 </h3>
 
                 <div class="overflow-x-auto">
@@ -222,7 +222,7 @@
                                             {{ $log->action }}
                                         </span>
                                     </td>
-                                    <td class="px-6 py-3 font-medium text-gray-800">{{ $log->user->username ?? 'System' }}</td>
+                                    <td class="px-6 py-3 font-medium text-gray-800">{{ $log->actor_username ?? $log->user?->username ?? 'System' }}</td>
                                     <td class="px-6 py-3 font-semibold text-gray-900">{{ $log->target_user }}</td>
                                     <td class="px-6 py-3 text-xs text-gray-500">{{ $log->details }}</td>
                                     <td class="px-6 py-3 text-xs font-mono text-gray-400">{{ $log->ip_address ?? 'N/A' }}</td>
